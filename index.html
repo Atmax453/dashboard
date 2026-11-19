@@ -35,9 +35,9 @@ input:focus,select:focus{border-color:var(--gold)}
 .ptitle h3{margin:0;font-size:15px;font-weight:600}
 .grid{display:grid;gap:12px}
 .g-kpi{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
-.g-3{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g-3{grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr))}
 .g-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-@media(max-width:900px){.g-2{grid-template-columns:1fr}}
+@media(max-width:900px){.g-2{grid-template-columns:minmax(0,1fr)}}
 .kpi .l{font-size:12px;color:var(--muted)} .kpi .v{font-size:24px;font-weight:600;margin-top:4px;font-family:var(--mono)} .kpi .d{font-size:12px;margin-top:4px;font-family:var(--mono)}
 .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:500;white-space:nowrap}
 .p-gd{background:var(--gold-bg);color:var(--gold)} .p-up{background:var(--up-bg);color:var(--up)} .p-dn{background:var(--dn-bg);color:var(--dn)} .p-bl{background:var(--blue-bg);color:var(--blue)} .p-mu{background:var(--panel2);color:var(--muted)}
@@ -96,6 +96,63 @@ canvas{max-width:100%}
 .chartbox.sm{height:240px}
 .flagchip{cursor:pointer}
 .empty{color:var(--muted);font-size:13px;padding:10px 0}
+/* section nav */
+.secnav{position:sticky;top:0;z-index:20;background:rgba(8,8,10,.92);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;gap:6px;overflow-x:auto;padding:8px 0;margin-bottom:12px;scrollbar-width:none;border-bottom:1px solid var(--line)}
+.secnav::-webkit-scrollbar{display:none}
+.secnav a{flex:0 0 auto;text-decoration:none;color:var(--muted);font-size:12px;padding:6px 12px;border:1px solid var(--line2);border-radius:999px;white-space:nowrap}
+.secnav a:hover,.secnav a.on{color:#0B0B0D;background:var(--gold);border-color:var(--gold)}
+section,[id^="sec-"]{scroll-margin-top:60px}
+.kpi .v{font-size:clamp(17px,2vw,24px)}
+/* ---------- phones and small tablets ---------- */
+@media(max-width:700px){
+  .wrap{padding:10px}
+  .panel{padding:12px;border-radius:12px}
+  .top .sub{display:none}
+  .top{gap:8px}
+  .top .acts{width:100%;justify-content:space-between}
+  .top .acts button{padding:6px 10px;font-size:12px}
+  #whoami{display:none}
+  .filters{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .filters #fBiz,.filters #fPerson,.filters .seg,.filters label{grid-column:1/-1}
+  .filters .seg button{flex:1}
+  .filters .arrow{display:none}
+  .filters input[type=date]{width:100%;min-width:0}
+  .g-kpi{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .kpi{padding:12px}
+  .kpi .v{font-size:clamp(15px,4.6vw,20px);word-break:break-word}
+  .kpi .d{font-size:11px}
+  .chartbox{height:260px} .chartbox.sm{height:220px}
+  .fc{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fc .v{font-size:15px}
+  .adv p{font-size:12.5px}
+  .ptitle h3{font-size:14px}
+  .scroll{max-height:none;overflow:visible}
+  #txSearch{min-width:0!important;width:100%}
+  .ptitle > div{width:100%}
+  .ptitle > div > *{flex:1}
+  /* tables become stacked cards */
+  table.cards tr:has(th){display:none}
+  table.cards tr{display:block;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;padding:6px 10px;background:var(--panel2)}
+  table.cards td{display:flex;justify-content:space-between;align-items:center;gap:12px;border:none;padding:4px 0;text-align:right!important}
+  table.cards td::before{content:attr(data-l);color:var(--muted);font-size:11px;text-align:left;flex:0 0 auto}
+  table.cards td[data-l=""]::before{content:none}
+  table.cards td.hide-m{display:none}
+  table.cards td input{width:130px!important}
+  /* compact transaction cards */
+  #txTable tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;padding:10px 12px}
+  #txTable td{display:block;padding:0;text-align:left!important}
+  #txTable td::before{content:none}
+  #txTable .c-date{grid-column:1;grid-row:1;font-size:12px}
+  #txTable .c-amt{grid-column:2;grid-row:1 / span 2;text-align:right!important;font-size:15px;align-self:center}
+  #txTable .c-cat{grid-column:1;grid-row:2;font-size:13px}
+  #txTable .c-meta{display:block!important;grid-column:1 / -1;font-size:11px;color:var(--muted)}
+  #txTable .c-notes{grid-column:1 / -1;font-size:11px;font-style:italic}
+  #txTable .c-flags{grid-column:1;}
+  #txTable .c-flags div{justify-content:flex-start!important}
+  #txTable .c-rcpt{grid-column:2;text-align:right!important}
+  #txTable .c-biz,#txTable .c-qty,#txTable .c-meth,#txTable .c-by{display:none}
+}
+.c-meta{display:none}
 </style>
 </head>
 <body>
@@ -124,10 +181,10 @@ canvas{max-width:100%}
       <div class="logo">AMS</div>
       <div>
         <div style="font-size:18px;font-weight:600">Triangle <span class="gd">command centre</span></div>
-        <div class="mu small">ATMAX live cashflow · velvet Mash · Paado Island · XEND</div>
+        <div class="mu small sub">ATMAX live cashflow · velvet Mash · Paado Island · XEND</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <div class="acts" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <span class="live"></span><span class="mu small" id="syncInfo">Loading…</span>
       <span class="pill p-mu" id="whoami"></span>
       <button id="refreshBtn" title="Refresh now">↻ Refresh</button>
@@ -146,27 +203,32 @@ canvas{max-width:100%}
       <button data-r="7">7D</button><button data-r="30">30D</button><button data-r="90">90D</button>
       <button data-r="ytd">YTD</button><button data-r="all" class="on">All</button>
     </div>
-    <input type="date" id="fFrom" title="From"> <span class="mu">→</span> <input type="date" id="fTo" title="To">
+    <input type="date" id="fFrom" title="From"> <span class="mu arrow">→</span> <input type="date" id="fTo" title="To">
     <select id="fPerson"><option value="all">Everyone</option></select>
     <label class="small mu" style="display:flex;align-items:center;gap:6px;cursor:pointer">
       <input type="checkbox" id="fCapital"> Include grant/investment in balance chart
     </label>
   </div>
 
+  <nav class="secnav" id="secnav">
+    <a href="#sec-overview">Overview</a><a href="#sec-chart">Chart</a><a href="#sec-biz">Businesses</a><a href="#sec-advice">Advice</a>
+    <a href="#sec-charts">Breakdown</a><a href="#sec-audit">Audit</a><a href="#sec-people">People</a><a href="#sec-tx">Transactions</a><a href="#sec-settings">Settings</a>
+  </nav>
+
   <!-- KPIs -->
-  <div class="grid g-kpi" id="kpis" style="margin-bottom:12px"></div>
+  <div id="sec-overview"><div class="grid g-kpi" id="kpis" style="margin-bottom:12px"></div></div>
 
   <!-- Main chart -->
-  <div class="panel" style="margin-bottom:12px">
+  <div class="panel" style="margin-bottom:12px" id="sec-chart">
     <div class="ptitle"><h3>Running balance by business</h3><span class="mu small" id="mainNote"></span></div>
     <div class="chartbox"><canvas id="mainChart"></canvas></div>
   </div>
 
   <!-- Business cards -->
-  <div class="grid g-3" id="bizCards" style="margin-bottom:12px"></div>
+  <div id="sec-biz"></div><div class="grid g-3" id="bizCards" style="margin-bottom:12px"></div>
 
   <!-- Advice + forecast -->
-  <div class="grid g-2" style="margin-bottom:12px">
+  <div class="grid g-2" style="margin-bottom:12px" id="sec-advice">
     <div class="panel">
       <div class="ptitle"><h3>🧠 Advice and what's lacking</h3><span class="mu small">Recalculated on every sync</span></div>
       <div id="advice"></div>
@@ -179,7 +241,7 @@ canvas{max-width:100%}
   </div>
 
   <!-- Charts -->
-  <div class="grid g-2" style="margin-bottom:12px">
+  <div class="grid g-2" style="margin-bottom:12px" id="sec-charts">
     <div class="panel"><div class="ptitle"><h3>Money in vs out by month</h3></div><div class="chartbox sm"><canvas id="monthChart"></canvas></div></div>
     <div class="panel"><div class="ptitle"><h3>Spending by category</h3></div><div class="chartbox sm"><canvas id="catChart"></canvas></div></div>
     <div class="panel"><div class="ptitle"><h3>Payment methods</h3><span class="mu small">Money moved</span></div><div class="chartbox sm"><canvas id="methodChart"></canvas></div></div>
@@ -187,7 +249,7 @@ canvas{max-width:100%}
   </div>
 
   <!-- Audit -->
-  <div class="grid g-2" style="margin-bottom:12px">
+  <div class="grid g-2" style="margin-bottom:12px" id="sec-audit">
     <div class="panel">
       <div class="ptitle"><h3>🛡️ Audit centre</h3><span class="pill" id="health"></span></div>
       <div id="audit"></div>
@@ -200,10 +262,10 @@ canvas{max-width:100%}
     </div>
   </div>
 
-  <div class="grid g-2" style="margin-bottom:12px">
+  <div class="grid g-2" style="margin-bottom:12px" id="sec-people">
     <div class="panel">
       <div class="ptitle"><h3>👤 People audit</h3><span class="mu small">By the email on each form entry</span></div>
-      <div class="tbl-wrap"><table id="people"></table></div>
+      <div class="tbl-wrap"><table id="people" class="cards"></table></div>
     </div>
     <div class="panel">
       <div class="ptitle"><h3>🎁 Grant and investment funds</h3><span class="mu small">Not counted as sales or profit</span></div>
@@ -212,7 +274,7 @@ canvas{max-width:100%}
   </div>
 
   <!-- Transactions -->
-  <div class="panel" style="margin-bottom:12px">
+  <div class="panel" style="margin-bottom:12px" id="sec-tx">
     <div class="ptitle">
       <h3>All transactions <span class="mu small" id="txCount"></span></h3>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -221,10 +283,10 @@ canvas{max-width:100%}
         <button id="csvBtn">⬇ Export CSV</button>
       </div>
     </div>
-    <div class="tbl-wrap scroll"><table id="txTable"></table></div>
+    <div class="tbl-wrap scroll"><table id="txTable" class="cards"></table></div>
   </div>
 
-  <div class="panel" style="margin-bottom:24px">
+  <div class="panel" style="margin-bottom:24px" id="sec-settings">
     <div class="ptitle"><h3>⚙️ Settings</h3></div>
     <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center" class="small">
       <label>Large transaction from GH₵ <input type="number" id="sLarge" style="width:110px"></label>
@@ -253,7 +315,7 @@ const BIZ_ICON = { 'velvet Mash': '📣', 'Paado Island': '🛶', 'XEND': '📡'
 const DAY = 86400000;
 
 let sb = null;
-const S = { tx: [], log: [], settings: { large: 1000, inactive: 14, auditFrom: '2026-11-19' }, balances: {}, charts: {}, range: 'all', flagFilter: '', user: '' };
+const S = { txLimit: 0, tx: [], log: [], settings: { large: 1000, inactive: 14, auditFrom: '2026-11-19' }, balances: {}, charts: {}, range: 'all', flagFilter: '', user: '' };
 
 /* ---------- helpers ---------- */
 const $ = id => document.getElementById(id);
@@ -505,6 +567,7 @@ Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
 Chart.defaults.plugins.tooltip.backgroundColor = '#18181D';
 Chart.defaults.plugins.tooltip.borderColor = '#33333C';
 Chart.defaults.plugins.tooltip.borderWidth = 1;
+const MOB = () => window.innerWidth < 700;
 function mk(id, cfg) {
   if (S.charts[id]) S.charts[id].destroy();
   S.charts[id] = new Chart($(id), cfg);
@@ -540,8 +603,8 @@ function renderMain() {
     options: {
       responsive: true, maintainAspectRatio: false, interaction: { mode: 'nearest', intersect: false },
       scales: {
-        x: { type: 'time', time: { tooltipFormat: 'dd MMM yyyy HH:mm' }, grid: { display: false }, ticks: { maxTicksLimit: 10, maxRotation: 0 } },
-        y: { ticks: { callback: v => 'GH₵' + fmt(v, 0) } }
+        x: { type: 'time', time: { tooltipFormat: 'dd MMM yyyy HH:mm' }, grid: { display: false }, ticks: { maxTicksLimit: MOB() ? 4 : 10, maxRotation: 0 } },
+        y: { ticks: { callback: v => (MOB() ? '' : 'GH₵') + fmt(v, 0), maxTicksLimit: MOB() ? 6 : 10 } }
       },
       plugins: {
         legend: { labels: { usePointStyle: true, boxWidth: 8 } },
@@ -642,7 +705,7 @@ function renderAdviceAndForecast() {
       { label: 'Actual (operations)', data: actual, borderColor: '#F5C542', backgroundColor: '#F5C54218', fill: true, borderWidth: 2, pointRadius: 0, stepped: 'before' },
       { label: 'Projected', data: proj, borderColor: '#6FB3FF', borderDash: [6, 4], borderWidth: 2, pointRadius: 3 }
     ] },
-    options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'time', grid: { display: false }, ticks: { maxTicksLimit: 6, maxRotation: 0 } }, y: { ticks: { callback: v => fmt(v, 0) } } }, plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8 } } } }
+    options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'time', grid: { display: false }, ticks: { maxTicksLimit: MOB() ? 4 : 6, maxRotation: 0 } }, y: { ticks: { callback: v => fmt(v, 0) } } }, plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8 } } } }
   });
 
   // advice rules
@@ -716,7 +779,7 @@ function renderCat() {
   const e = Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 8);
   mk('catChart', {
     type: 'bar',
-    data: { labels: e.map(x => x[0].length > 28 ? x[0].slice(0, 27) + '…' : x[0]), datasets: [{ data: e.map(x => x[1]), backgroundColor: '#F5C542', borderRadius: 4 }] },
+    data: { labels: e.map(x => { const L = MOB() ? 16 : 28; return x[0].length > L ? x[0].slice(0, L - 1) + '…' : x[0]; }), datasets: [{ data: e.map(x => x[1]), backgroundColor: '#F5C542', borderRadius: 4 }] },
     options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ghs(c.raw) } } }, scales: { x: { ticks: { callback: v => fmt(v, 0) } }, y: { grid: { display: false } } } }
   });
 }
@@ -728,7 +791,7 @@ function renderMethod() {
   mk('methodChart', {
     type: 'doughnut',
     data: { labels: e.map(x => x[0]), datasets: [{ data: e.map(x => x[1]), backgroundColor: e.map(x => col[x[0]] || '#8C8A82'), borderColor: '#121216', borderWidth: 3 }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8 } }, tooltip: { callbacks: { label: c => `${c.label}: ${ghs(c.raw)}` } } } }
+    options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: MOB() ? 'bottom' : 'right', labels: { usePointStyle: true, boxWidth: 8 } }, tooltip: { callbacks: { label: c => `${c.label}: ${ghs(c.raw)}` } } } }
   });
 }
 function renderHeat() {
@@ -777,13 +840,13 @@ function renderBalances() {
   const exp = { 'Cash': 0, 'Mobile Money': 0, 'Bank': 0 };
   filtered({ ignoreRange: true }).forEach(t => { const k = methodKey(t.method); exp[k] = (exp[k] || 0) + signed(t); });
   const keys = Object.keys(exp);
-  $('balances').innerHTML = `<table><tr><th>Method</th><th class="r">Sheet says</th><th class="r">You actually have</th><th class="r">Difference</th></tr>` +
+  $('balances').innerHTML = `<table class="cards"><tr><th>Method</th><th class="r">Sheet says</th><th class="r">You actually have</th><th class="r">Difference</th></tr>` +
     keys.map(k => {
       const act = S.balances[k];
       const diff = act === undefined || act === '' || act === null ? null : Number(act) - exp[k];
-      return `<tr><td>${esc(k)}</td><td class="r num">${ghs(exp[k])}</td>
-      <td class="r"><input type="number" step="0.01" data-bal="${esc(k)}" value="${act ?? ''}" style="width:120px;text-align:right" placeholder="Enter"></td>
-      <td class="r num ${diff == null ? 'mu' : Math.abs(diff) < 1 ? 'up' : 'dn'}">${diff == null ? '—' : Math.abs(diff) < 1 ? '✓ Matches' : sgn(diff)}</td></tr>`;
+      return `<tr><td data-l="Method"><b>${esc(k)}</b></td><td class="r num" data-l="Sheet says">${ghs(exp[k])}</td>
+      <td class="r" data-l="You actually have"><input type="number" step="0.01" data-bal="${esc(k)}" value="${act ?? ''}" style="width:120px;text-align:right" placeholder="Enter"></td>
+      <td data-l="Difference" class="r num ${diff == null ? 'mu' : Math.abs(diff) < 1 ? 'up' : 'dn'}">${diff == null ? '—' : Math.abs(diff) < 1 ? '✓ Matches' : sgn(diff)}</td></tr>`;
     }).join('') + `</table><div style="margin-top:10px;display:flex;gap:8px;align-items:center"><button id="balSave">Save balances</button><span class="mu small" id="balMsg">${S.balances._at ? 'Last checked ' + dstr(new Date(S.balances._at)) : ''}</span></div>`;
   $('balSave').addEventListener('click', async () => {
     const v = { _at: new Date().toISOString() };
@@ -805,8 +868,8 @@ function renderPeople() {
   });
   const e = Object.entries(p).sort((a, b) => b[1].n - a[1].n);
   $('people').innerHTML = e.length ? `<tr><th>Person</th><th>Logs for</th><th class="r">Entries</th><th class="r">In</th><th class="r">Out</th><th class="r">Flags</th><th class="r">Last entry</th></tr>` +
-    e.map(([k, r]) => `<tr class="clickable" data-person="${esc(k)}"><td>${esc(k)}</td><td class="mu small">${[...r.biz].map(esc).join(', ')}</td><td class="r num">${r.n}</td><td class="r num up">${fmt(r.i)}</td><td class="r num dn">${fmt(r.o)}</td>
-      <td class="r"><span class="pill ${r.f ? (r.f / r.n > 0.3 ? 'p-dn' : 'p-gd') : 'p-up'}">${r.f} · ${pct(r.f / r.n)}</span></td><td class="r small ${daysAgo(r.last) > S.settings.inactive ? 'dn' : 'mu'}">${dshort(r.last)} · ${daysAgo(r.last)}d</td></tr>`).join('')
+    e.map(([k, r]) => `<tr class="clickable" data-person="${esc(k)}"><td data-l=""><b>${esc(k)}</b></td><td class="mu small" data-l="Logs for">${[...r.biz].map(esc).join(', ')}</td><td class="r num" data-l="Entries">${r.n}</td><td class="r num up" data-l="In">${fmt(r.i)}</td><td class="r num dn" data-l="Out">${fmt(r.o)}</td>
+      <td class="r" data-l="Flags"><span class="pill ${r.f ? (r.f / r.n > 0.3 ? 'p-dn' : 'p-gd') : 'p-up'}">${r.f} · ${pct(r.f / r.n)}</span></td><td data-l="Last entry" class="r small ${daysAgo(r.last) > S.settings.inactive ? 'dn' : 'mu'}">${dshort(r.last)} · ${daysAgo(r.last)}d</td></tr>`).join('')
     : '<tr><td class="empty">No entries in this period.</td></tr>';
   document.querySelectorAll('#people [data-person]').forEach(el => el.addEventListener('click', () => {
     const v = el.dataset.person; if ([...$('fPerson').options].some(o => o.value === v)) { $('fPerson').value = v; render(); }
@@ -842,15 +905,20 @@ function renderTable() {
   const rows = tableRows();
   $('txCount').textContent = `· ${rows.length} shown`;
   $('txTable').innerHTML = `<tr><th>Date</th><th>Business</th><th>Category</th><th class="r">Qty</th><th class="r">Amount</th><th>Method</th><th>By</th><th>Notes</th><th>Flags</th><th></th></tr>` +
-    rows.slice(0, 500).map(t => {
+    rows.slice(0, S.txLimit || (MOB() ? 25 : 150)).map(t => {
       const cls = t.kind === 'capital' ? 'bl' : t.direction === 'in' ? 'up' : 'dn';
       const flags = t.flags.map(f => `<span class="pill ${FLAGS[f].cls}" title="${f === 'price' ? 'Expected ' + ghs(t.expected) : ''}">${FLAGS[f].label}${f === 'price' ? ' ' + sgn(t.priceDiff) : ''}</span>`).join(' ');
       const url = safeUrl(t.receipt);
-      return `<tr><td class="small" style="white-space:nowrap">${dstr(t.date)}</td><td><span style="color:${BIZ_COLOR[t.business] || 'inherit'}">●</span> ${esc(t.business)}</td>
-        <td class="small">${esc(t.category || '—')}</td><td class="r num">${t.qty ?? '—'}</td><td class="r num ${cls}">${t.amount == null ? '—' : sgn(signed(t))}</td>
-        <td class="small">${esc(t.method)}</td><td class="small mu">${esc(t.submitter)}</td><td class="small mu">${esc(t.notes)}</td>
-        <td><div style="display:flex;gap:4px;flex-wrap:wrap">${flags}</div></td><td>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener" title="Open receipt">🧾</a>` : ''}</td></tr>`;
-    }).join('') + (rows.length > 500 ? `<tr><td colspan="10" class="mu small">Showing the latest 500. Use search or Export CSV for the rest.</td></tr>` : '');
+      const dot = `<span style="color:${BIZ_COLOR[t.business] || 'inherit'}">●</span>`;
+      return `<tr><td class="small c-date" style="white-space:nowrap">${dstr(t.date)}</td><td class="c-biz">${dot} ${esc(t.business)}</td>
+        <td class="small c-cat">${esc(t.category || '—')}</td><td class="r num c-qty">${t.qty ?? '—'}</td><td class="r num c-amt ${cls}"><b>${t.amount == null ? '—' : sgn(signed(t))}</b></td>
+        <td class="small c-meth">${esc(t.method)}</td><td class="small mu c-by">${esc(t.submitter)}</td>
+        <td class="c-meta">${dot} ${esc(t.business)} · Qty ${t.qty ?? '—'} · ${esc(methodKey(t.method))} · ${esc((t.submitter || '').split('@')[0])}</td>
+        <td class="small mu c-notes ${t.notes ? '' : 'hide-m'}">${esc(t.notes)}</td>
+        <td class="c-flags ${flags ? '' : 'hide-m'}"><div style="display:flex;gap:4px;flex-wrap:wrap">${flags}</div></td><td class="c-rcpt ${url ? '' : 'hide-m'}">${url ? `<a href="${esc(url)}" target="_blank" rel="noopener" title="Open receipt">🧾</a>` : ''}</td></tr>`;
+    }).join('') + (rows.length > (S.txLimit || (MOB() ? 25 : 150)) ? `<tr><td colspan="10" data-l="" style="justify-content:center;text-align:center!important"><button id="txMore">Show more (${rows.length - (S.txLimit || (MOB() ? 25 : 150))} left)</button></td></tr>` : '');
+  const more = $('txMore');
+  if (more) more.addEventListener('click', () => { S.txLimit = (S.txLimit || (MOB() ? 25 : 150)) + (MOB() ? 25 : 150); renderTable(); });
 }
 function exportCSV() {
   const rows = tableRows();
@@ -873,7 +941,7 @@ document.querySelectorAll('#fRange button').forEach(b => b.addEventListener('cli
   document.querySelectorAll('#fRange button').forEach(x => x.classList.remove('on'));
   b.classList.add('on'); S.range = b.dataset.r; $('fFrom').value = ''; $('fTo').value = ''; render();
 }));
-$('txSearch').addEventListener('input', renderTable);
+$('txSearch').addEventListener('input', () => { S.txLimit = 0; renderTable(); });
 $('txFlag').addEventListener('change', e => { S.flagFilter = e.target.value; renderTable(); });
 $('csvBtn').addEventListener('click', exportCSV);
 $('refreshBtn').addEventListener('click', loadData);
@@ -883,6 +951,13 @@ $('sSave').addEventListener('click', async () => {
   if (error) { $('sMsg').textContent = 'Could not save: ' + error.message; return; }
   S.settings = v; $('sMsg').textContent = 'Saved'; computeFlags(); render();
 });
+
+let lastMob = MOB(), rT;
+window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(() => { if (MOB() !== lastMob && S.tx.length) { lastMob = MOB(); render(); } }, 250); });
+const navObs = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) document.querySelectorAll('#secnav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id));
+}), { rootMargin: '-40% 0px -55% 0px' }) : null;
+if (navObs) document.querySelectorAll('[id^="sec-"]').forEach(el => navObs.observe(el));
 
 boot();
 </script>
