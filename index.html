@@ -289,7 +289,7 @@ textarea:focus{border-color:var(--gold)}
         <select id="plMonth"></select>
         <select id="plBiz"><option value="all">All businesses</option><option>velvet Mash</option><option>Paado Island</option><option>XEND</option></select>
         <button id="plPdf">⬇ Download PDF</button>
-        <button id="waBtn">💬 Weekly summary to WhatsApp</button>
+        <button id="waBtn">💬 Weekly card for WhatsApp</button>
       </div>
     </div>
     <div id="pl"></div>
@@ -370,6 +370,14 @@ textarea:focus{border-color:var(--gold)}
 </div>
 </div>
 
+<div id="cardModal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:61;display:flex;align-items:center;justify-content:center;padding:16px">
+  <div class="panel" style="max-width:420px;width:100%;max-height:94vh;overflow:auto">
+    <div class="ptitle"><h3>💬 Weekly summary card</h3><button id="cardClose" aria-label="Close">✕</button></div>
+    <img id="cardImg" alt="Weekly summary card" style="width:100%;border-radius:10px;display:block;border:1px solid var(--line)">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button id="cardShare" class="on" style="flex:1">Share to WhatsApp</button><button id="cardDl">⬇ Download</button><button id="cardText">Send as text</button></div>
+    <div class="mu small" id="cardMsg" style="margin-top:8px">On a phone, "Share" opens your share menu: pick WhatsApp, then the chat or group.</div>
+  </div>
+</div>
 <div id="modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:60;display:flex;align-items:center;justify-content:center;padding:16px">
   <div class="panel" style="max-width:460px;width:100%">
     <h3 id="mTitle" style="margin:0 0 10px;font-size:16px"></h3>
@@ -1228,6 +1236,110 @@ function shareWhatsApp() {
   window.open('https://wa.me/?text=' + encodeURIComponent(weeklySummaryText()), '_blank', 'noopener');
 }
 
+
+/* ---------- 6b. WhatsApp weekly card (image) ---------- */
+function weeklyData() {
+  const now = Date.now(), from = new Date(now - 7 * DAY), pfrom = new Date(now - 14 * DAY);
+  const wk = S.tx.filter(t => t.date >= from), pw = S.tx.filter(t => t.date >= pfrom && t.date < from);
+  return { from, to: new Date(), T: totals(wk), P: totals(pw), wk,
+    biz: BIZ.map(b => { const l = wk.filter(t => t.business === b); return { b, n: l.length, ...totals(l) }; }),
+    flags: wk.filter(t => t.flags.some(f => FLAGS[f].problem)).length,
+    over: budgetStatus().filter(x => x.pct >= 0.8) };
+}
+function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function buildWeeklyCard() {
+  const d = weeklyData();
+  const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  const sans = '"Inter", system-ui, sans-serif', mono = '"JetBrains Mono", ui-monospace, monospace';
+  const money = n => (n < 0 ? '−' : '') + 'GH₵' + fmt(Math.abs(n), 2);
+  const chg = (a, b, invert) => { if (!b) return null; const p = (a - b) / Math.abs(b); return { txt: (p >= 0 ? '▲ ' : '▼ ') + Math.abs(p * 100).toFixed(0) + '% vs last week', good: invert ? p < 0 : p >= 0 }; };
+  // background
+  x.fillStyle = '#08080A'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#F5C542'; x.fillRect(0, 0, W, 8);
+  // header
+  rr(x, 64, 64, 96, 96, 22); x.fillStyle = '#A32D2D'; x.fill();
+  x.fillStyle = '#fff'; x.font = `600 34px ${sans}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('AMS', 112, 112);
+  x.textAlign = 'left'; x.textBaseline = 'alphabetic';
+  x.fillStyle = '#ECEAE3'; x.font = `600 44px ${sans}`; x.fillText('Triangle weekly summary', 188, 106);
+  x.fillStyle = '#F5C542'; x.font = `500 30px ${sans}`; x.fillText(`${dshort(d.from)} – ${dshort(d.to)} ${d.to.getFullYear()}`, 188, 150);
+  // net hero
+  rr(x, 64, 200, W - 128, 230, 28); x.fillStyle = '#121216'; x.fill(); x.strokeStyle = '#24242B'; x.lineWidth = 2; x.stroke();
+  x.fillStyle = '#8C8A82'; x.font = `500 30px ${sans}`; x.fillText('Net profit this week', 104, 262);
+  x.fillStyle = d.T.net >= 0 ? '#3DDC97' : '#FF5C5C'; x.font = `600 92px ${mono}`; x.fillText((d.T.net > 0 ? '+' : '') + money(d.T.net), 100, 370);
+  const nc = chg(d.T.net, d.P.net);
+  if (nc) { x.fillStyle = nc.good ? '#3DDC97' : '#FF5C5C'; x.font = `500 26px ${mono}`; x.fillText(nc.txt, 104, 410); }
+  // tiles
+  const tiles = [['Money in', money(d.T.inn), '#3DDC97', chg(d.T.inn, d.P.inn)], ['Money out', money(d.T.out), '#FF5C5C', chg(d.T.out, d.P.out, true)], ['Grants', money(d.T.cap), '#6FB3FF', null]];
+  const tw = (W - 128 - 32) / 3;
+  tiles.forEach(([l, v, col, ch], i) => {
+    const tx = 64 + i * (tw + 16);
+    rr(x, tx, 456, tw, 170, 22); x.fillStyle = '#121216'; x.fill(); x.strokeStyle = '#24242B'; x.stroke();
+    x.fillStyle = '#8C8A82'; x.font = `500 26px ${sans}`; x.fillText(l, tx + 26, 504);
+    x.fillStyle = col; let fs = 40; do { x.font = `600 ${fs}px ${mono}`; fs -= 2; } while (x.measureText(v).width > tw - 48 && fs > 18); x.fillText(v, tx + 24, 562);
+    if (ch) { x.fillStyle = ch.good ? '#3DDC97' : '#FF5C5C'; x.font = `500 22px ${mono}`; x.fillText(ch.txt.replace(' vs last week', ''), tx + 26, 600); }
+  });
+  // businesses
+  x.fillStyle = '#ECEAE3'; x.font = `600 32px ${sans}`; x.fillText('By business', 64, 690);
+  const maxAbs = Math.max(1, ...d.biz.map(b => Math.max(b.inn, b.out)));
+  d.biz.forEach((b, i) => {
+    const y = 720 + i * 150;
+    rr(x, 64, y, W - 128, 132, 22); x.fillStyle = '#121216'; x.fill();
+    x.fillStyle = BIZ_COLOR[b.b]; x.fillRect(64, y + 18, 6, 96);
+    x.fillStyle = '#ECEAE3'; x.font = `600 32px ${sans}`; x.fillText(b.b, 96, y + 52);
+    x.fillStyle = '#8C8A82'; x.font = `500 24px ${sans}`; x.fillText(b.n ? `${b.n} entr${b.n === 1 ? 'y' : 'ies'}` : 'No entries this week', 96, y + 92);
+    x.textAlign = 'right';
+    x.fillStyle = b.net > 0 ? '#3DDC97' : b.net < 0 ? '#FF5C5C' : '#8C8A82'; x.font = `600 40px ${mono}`;
+    x.fillText((b.net > 0 ? '+' : '') + money(b.net), W - 96, y + 56);
+    x.fillStyle = '#8C8A82'; x.font = `500 22px ${mono}`;
+    const detail = `in ${fmt(b.inn, 0)} · out ${fmt(b.out, 0)}${b.cap ? ' · grant ' + fmt(b.cap, 0) : ''}`;
+    x.fillText(detail, W - 96, y + 94);
+    const netW = (x.font = `600 40px ${mono}`, x.measureText((b.net > 0 ? '+' : '') + money(b.net)).width);
+    x.font = `500 22px ${mono}`; const detW = x.measureText(detail).width;
+    x.textAlign = 'left';
+    // mini bars (in = green, out = red), placed in the free space between name and figures
+    const bx = 400, bw = Math.min(240, W - 96 - Math.max(detW, netW) - 32 - bx);
+    if (bw < 60) return;
+    x.fillStyle = '#1C1C22'; x.fillRect(bx, y + 44, bw, 10); x.fillRect(bx, y + 70, bw, 10);
+    x.fillStyle = '#3DDC97'; x.fillRect(bx, y + 44, bw * b.inn / maxAbs, 10);
+    x.fillStyle = '#FF5C5C'; x.fillRect(bx, y + 70, bw * b.out / maxAbs, 10);
+  });
+  // audit + budgets
+  let y = 1190;
+  x.font = `500 28px ${sans}`;
+  x.fillStyle = d.flags ? '#F5C542' : '#3DDC97'; x.fillText(`🛡️  Audit flags this week: ${d.flags}`, 64, y);
+  if (d.over.length) { y += 44; x.fillStyle = '#FF5C5C'; const t = '⚠️  Budgets near/over: ' + d.over.slice(0, 2).map(o => shortCat(o.cat) + ' ' + Math.round(o.pct * 100) + '%').join(' · '); x.fillText(t.length > 60 ? t.slice(0, 59) + '…' : t, 64, y); }
+  // footer
+  x.fillStyle = '#24242B'; x.fillRect(64, H - 86, W - 128, 2);
+  x.fillStyle = '#8C8A82'; x.font = `500 24px ${sans}`; x.fillText('ATMAX · velvet Mash · Paado Island · XEND', 64, H - 40);
+  x.textAlign = 'right'; x.fillStyle = '#F5C542'; x.fillText(location.host + location.pathname.replace(/index\.html$/, ''), W - 64, H - 40); x.textAlign = 'left';
+  return c;
+}
+async function openWeeklyCard() {
+  try { await document.fonts.ready; } catch (e) {}
+  const c = buildWeeklyCard();
+  $('cardImg').src = c.toDataURL('image/png');
+  $('cardModal').classList.remove('hidden');
+  $('cardModal')._canvas = c;
+}
+async function shareWeeklyCard() {
+  const c = $('cardModal')._canvas; if (!c) return;
+  const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+  const name = 'triangle-weekly-' + new Date().toISOString().slice(0, 10) + '.png';
+  const file = new File([blob], name, { type: 'image/png' });
+  const text = 'ATMAX Triangle · weekly summary\n' + location.origin + location.pathname;
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], text, title: 'Triangle weekly summary' }); return; } catch (e) { if (e.name === 'AbortError') return; }
+  }
+  downloadWeeklyCard();
+  window.open('https://web.whatsapp.com/', '_blank', 'noopener');
+  $('cardMsg').textContent = 'Image downloaded. In WhatsApp, open the chat or group and attach it.';
+}
+function downloadWeeklyCard() {
+  const c = $('cardModal')._canvas; if (!c) return;
+  const a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = 'triangle-weekly-' + new Date().toISOString().slice(0, 10) + '.png'; a.click();
+}
+
 /* ---------- 4. events (Paado Island) ---------- */
 function autoEvents() {
   const l = S.tx.filter(t => t.business === 'Paado Island');
@@ -1438,7 +1550,12 @@ $('evEdit').addEventListener('click', openEventEditor);
 $('plMonth').addEventListener('change', renderPL);
 $('plBiz').addEventListener('change', renderPL);
 $('plPdf').addEventListener('click', downloadPDF);
-$('waBtn').addEventListener('click', shareWhatsApp);
+$('waBtn').addEventListener('click', openWeeklyCard);
+$('cardShare').addEventListener('click', shareWeeklyCard);
+$('cardDl').addEventListener('click', downloadWeeklyCard);
+$('cardText').addEventListener('click', shareWhatsApp);
+$('cardClose').addEventListener('click', () => $('cardModal').classList.add('hidden'));
+$('cardModal').addEventListener('click', e => { if (e.target.id === 'cardModal') $('cardModal').classList.add('hidden'); });
 $('rvMonth').addEventListener('change', renderReview);
 $('rvAI').addEventListener('click', aiReview);
 $('rvCopy').addEventListener('click', copyForClaude);
@@ -1446,7 +1563,7 @@ $('mSave').addEventListener('click', saveReview);
 $('mUndo').addEventListener('click', removeReview);
 $('mCancel').addEventListener('click', closeModal);
 $('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); $('cardModal').classList.add('hidden'); } });
 $('installBtn').addEventListener('click', installApp);
 $('refreshBtn').addEventListener('click', loadData);
 $('sSave').addEventListener('click', async () => {
