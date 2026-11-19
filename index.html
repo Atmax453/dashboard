@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Triangle Command Centre · ATMAX</title>
 <meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#08080A">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Triangle">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -153,6 +161,25 @@ section,[id^="sec-"]{scroll-margin-top:60px}
   #txTable .c-biz,#txTable .c-qty,#txTable .c-meth,#txTable .c-by{display:none}
 }
 .c-meta{display:none}
+.print-only{display:none}
+textarea{font-family:inherit;font-size:13px;color:var(--text);background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:10px;width:100%;min-height:80px;outline:none;resize:vertical}
+textarea:focus{border-color:var(--gold)}
+.pl-table td{padding:5px 8px}
+.revbtn{padding:3px 8px;font-size:11px}
+@media print{
+  body.printing-pl{background:#fff!important;color:#111!important}
+  body.printing-pl #app .wrap > *:not(#sec-pl){display:none!important}
+  body.printing-pl #sec-pl{border:none!important;background:#fff!important;padding:0!important}
+  body.printing-pl #sec-pl .ptitle{display:none!important}
+  body.printing-pl .print-only{display:block!important}
+  body.printing-pl #sec-pl *{color:#111!important;background:transparent!important;border-color:#ccc!important}
+  body.printing-pl #sec-pl .logo{background:#A32D2D!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body.printing-pl .fc div{border:1px solid #ccc!important}
+  body.printing-pl table.cards tr:has(th){display:table-row!important}
+  body.printing-pl table.cards tr{display:table-row!important;border:none!important;padding:0!important}
+  body.printing-pl table.cards td{display:table-cell!important}
+  body.printing-pl table.cards td::before{content:none!important}
+}
 </style>
 </head>
 <body>
@@ -187,6 +214,7 @@ section,[id^="sec-"]{scroll-margin-top:60px}
     <div class="acts" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <span class="live"></span><span class="mu small" id="syncInfo">Loading…</span>
       <span class="pill p-mu" id="whoami"></span>
+      <button id="installBtn" class="hidden" title="Install as an app">📲 Install app</button>
       <button id="refreshBtn" title="Refresh now">↻ Refresh</button>
       <button id="logoutBtn">Log out</button>
     </div>
@@ -211,7 +239,7 @@ section,[id^="sec-"]{scroll-margin-top:60px}
   </div>
 
   <nav class="secnav" id="secnav">
-    <a href="#sec-overview">Overview</a><a href="#sec-chart">Chart</a><a href="#sec-biz">Businesses</a><a href="#sec-advice">Advice</a>
+    <a href="#sec-overview">Overview</a><a href="#sec-chart">Chart</a><a href="#sec-biz">Businesses</a><a href="#sec-advice">Advice</a><a href="#sec-goals">Budgets</a><a href="#sec-pl">P&amp;L</a><a href="#sec-events">Events</a><a href="#sec-review">Review</a>
     <a href="#sec-charts">Breakdown</a><a href="#sec-audit">Audit</a><a href="#sec-people">People</a><a href="#sec-tx">Transactions</a><a href="#sec-settings">Settings</a>
   </nav>
 
@@ -238,6 +266,48 @@ section,[id^="sec-"]{scroll-margin-top:60px}
       <div class="fc" id="forecast"></div>
       <div class="chartbox"><canvas id="fcChart"></canvas></div>
     </div>
+  </div>
+
+  <!-- Budgets + targets -->
+  <div class="grid g-2" style="margin-bottom:12px" id="sec-goals">
+    <div class="panel">
+      <div class="ptitle"><h3>💰 Budgets · <span id="budMonth" class="mu"></span></h3><button id="budEdit">Edit budgets</button></div>
+      <div id="budgets"></div>
+      <div id="budEditor" class="hidden"></div>
+    </div>
+    <div class="panel">
+      <div class="ptitle"><h3>🎯 Targets · <span id="tgtMonth" class="mu"></span></h3><button id="tgtEdit">Edit targets</button></div>
+      <div id="targets"></div>
+      <div id="tgtEditor" class="hidden"></div>
+    </div>
+  </div>
+
+  <!-- Profit and loss -->
+  <div class="panel" style="margin-bottom:12px" id="sec-pl">
+    <div class="ptitle"><h3>📄 Profit and loss statement</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select id="plMonth"></select>
+        <select id="plBiz"><option value="all">All businesses</option><option>velvet Mash</option><option>Paado Island</option><option>XEND</option></select>
+        <button id="plPdf">⬇ Download PDF</button>
+        <button id="waBtn">💬 Weekly summary to WhatsApp</button>
+      </div>
+    </div>
+    <div id="pl"></div>
+  </div>
+
+  <!-- Events -->
+  <div class="panel" style="margin-bottom:12px" id="sec-events">
+    <div class="ptitle"><h3>🎪 Paado Island events</h3><button id="evEdit">Edit events</button></div>
+    <div id="events"></div>
+    <div id="evEditor" class="hidden"></div>
+  </div>
+
+  <!-- Monthly review -->
+  <div class="panel" style="margin-bottom:12px" id="sec-review">
+    <div class="ptitle"><h3>🤖 Monthly review</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><select id="rvMonth"></select><button id="rvAI" class="on">Generate AI review</button><button id="rvCopy">Copy for Claude</button></div>
+    </div>
+    <div id="review"></div>
   </div>
 
   <!-- Charts -->
@@ -294,9 +364,20 @@ section,[id^="sec-"]{scroll-margin-top:60px}
       <label>Audit entries from <input type="date" id="sAuditFrom"> <span class="mu">(older entries count as already checked; clear it to audit everything)</span></label>
       <button id="sSave">Save settings</button><span id="sMsg" class="mu"></span>
     </div>
+    <div class="mu small" style="margin-top:12px;line-height:1.6">📲 <b>Install as an app:</b> on Android or a computer (Chrome/Edge), use the "Install app" button at the top, or the browser menu → "Install app". On iPhone (Safari), tap the Share button → "Add to Home Screen".</div>
   </div>
 
 </div>
+</div>
+
+<div id="modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:60;display:flex;align-items:center;justify-content:center;padding:16px">
+  <div class="panel" style="max-width:460px;width:100%">
+    <h3 id="mTitle" style="margin:0 0 10px;font-size:16px"></h3>
+    <div id="mBody"></div>
+    <textarea id="mReason" placeholder="Why is this OK? For example: discount for a returning customer"></textarea>
+    <div class="err" id="mErr"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button id="mSave" class="on">Mark as reviewed</button><button id="mUndo">Remove review</button><button id="mCancel">Cancel</button></div>
+  </div>
 </div>
 
 <script>
@@ -315,7 +396,7 @@ const BIZ_ICON = { 'velvet Mash': '📣', 'Paado Island': '🛶', 'XEND': '📡'
 const DAY = 86400000;
 
 let sb = null;
-const S = { txLimit: 0, tx: [], log: [], settings: { large: 1000, inactive: 14, auditFrom: '2026-11-19' }, balances: {}, charts: {}, range: 'all', flagFilter: '', user: '' };
+const S = { budgets: {}, targets: [], events: [], reviews: {}, txLimit: 0, tx: [], log: [], settings: { large: 1000, inactive: 14, auditFrom: '2026-11-19' }, balances: {}, charts: {}, range: 'all', flagFilter: '', user: '' };
 
 /* ---------- helpers ---------- */
 const $ = id => document.getElementById(id);
@@ -380,6 +461,9 @@ async function loadSettings() {
   (data || []).forEach(r => {
     if (r.key === 'thresholds') Object.assign(S.settings, r.value || {});
     if (r.key === 'balances') S.balances = r.value || {};
+    if (r.key === 'budgets') S.budgets = r.value || {};
+    if (r.key === 'targets') S.targets = Array.isArray(r.value) ? r.value : [];
+    if (r.key === 'events') S.events = Array.isArray(r.value) ? r.value : [];
   });
   $('sLarge').value = S.settings.large; $('sInactive').value = S.settings.inactive; $('sAuditFrom').value = S.settings.auditFrom || '';
 }
@@ -388,11 +472,13 @@ async function saveSetting(key, value) {
 }
 async function loadData() {
   try {
-    const [tx, log] = await Promise.all([
+    const [tx, log, rev] = await Promise.all([
       sb.from('tmc_transactions').select('*').order('ts', { ascending: true }).limit(10000),
-      sb.from('tmc_sync_log').select('*').order('synced_at', { ascending: false }).limit(30)
+      sb.from('tmc_sync_log').select('*').order('synced_at', { ascending: false }).limit(30),
+      sb.from('tmc_reviews').select('*')
     ]);
     if (tx.error) throw tx.error;
+    S.reviews = {}; (rev.data || []).forEach(r => S.reviews[r.tx_key] = r);
     setData(tx.data || [], log.data || []);
   } catch (err) {
     $('syncInfo').textContent = 'Could not load data: ' + (err.message || err);
@@ -416,7 +502,8 @@ const FLAGS = {
   price: { label: 'Price mismatch', cls: 'p-gd', problem: true },
   dup: { label: 'Possible duplicate', cls: 'p-gd', problem: true },
   large: { label: 'Large transaction', cls: 'p-bl', problem: false },
-  capital: { label: 'Grant / investment', cls: 'p-bl', problem: false }
+  capital: { label: 'Grant / investment', cls: 'p-bl', problem: false },
+  reviewed: { label: 'Reviewed', cls: 'p-up', problem: false }
 };
 function unitPrice(cat) {
   const m = String(cat || '').match(/GH₵\s*([\d,]+(?:\.\d+)?)/i);
@@ -456,6 +543,7 @@ function computeFlags() {
       if (!list[i].preAudit && list[i].date - list[i - 1].date < win && list[i].amount) list[i].flags.push('dup');
     }
   });
+  applyReviews();
 }
 
 /* ---------- filters ---------- */
@@ -502,6 +590,7 @@ function render() {
   renderMain();
   renderBizCards();
   renderAdviceAndForecast();
+  renderFeatures();
   renderMonth(); renderCat(); renderMethod(); renderHeat();
   renderAudit(); renderBalances(); renderPeople(); renderGrants();
   renderTable();
@@ -754,6 +843,10 @@ function renderAdviceAndForecast() {
   scope.filter(t => isOp(t) && t.direction === 'in').forEach(t => wd[t.date.getDay()] += t.amount || 0);
   const best = wd.indexOf(Math.max(...wd));
   if (Math.max(...wd) > 0) add('info', '📅', `Most income comes in on <b>${['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'][best]}</b>. Plan staff, stock and promotion around that day.`);
+  budgetStatus().filter(b => biz === 'all' || b.biz === biz).forEach(b => {
+    if (b.pct > 1) add('danger', '💰', `<b>${esc(shortCat(b.cat))}</b> (${esc(b.biz)}) is over its monthly budget: ${ghs(b.spent, 0)} spent of ${ghs(b.limit, 0)}.`);
+    else if (b.pct >= 0.8) add('warn', '💰', `<b>${esc(shortCat(b.cat))}</b> (${esc(b.biz)}) has used ${pct(b.pct)} of its monthly budget.`);
+  });
   const strayCount = latestStray().length;
   if (strayCount && !S.settings.auditFrom) add('warn', '🧹', `${strayCount} row(s) in the sheet aren't form entries (for example, typed notes). They're ignored. Move notes into the Reference/Notes column instead.`);
 
@@ -907,7 +1000,11 @@ function renderTable() {
   $('txTable').innerHTML = `<tr><th>Date</th><th>Business</th><th>Category</th><th class="r">Qty</th><th class="r">Amount</th><th>Method</th><th>By</th><th>Notes</th><th>Flags</th><th></th></tr>` +
     rows.slice(0, S.txLimit || (MOB() ? 25 : 150)).map(t => {
       const cls = t.kind === 'capital' ? 'bl' : t.direction === 'in' ? 'up' : 'dn';
-      const flags = t.flags.map(f => `<span class="pill ${FLAGS[f].cls}" title="${f === 'price' ? 'Expected ' + ghs(t.expected) : ''}">${FLAGS[f].label}${f === 'price' ? ' ' + sgn(t.priceDiff) : ''}</span>`).join(' ');
+      const hasProblem = t.flags.some(f => FLAGS[f].problem);
+      const flags = t.flags.map(f => f === 'reviewed'
+        ? `<span class="pill p-up clickable" data-rev="${esc(txKey(t))}" title="${esc(t.reviewedFlags.map(x => FLAGS[x].label).join(', '))}">✓ Reviewed: ${esc(t.review.reason.length > 40 ? t.review.reason.slice(0, 39) + '…' : t.review.reason)}</span>`
+        : `<span class="pill ${FLAGS[f].cls}" title="${f === 'price' ? 'Expected ' + ghs(t.expected) : ''}">${FLAGS[f].label}${f === 'price' ? ' ' + sgn(t.priceDiff) : ''}</span>`).join(' ')
+        + (hasProblem ? ` <button class="revbtn" data-rev="${esc(txKey(t))}">Review</button>` : '');
       const url = safeUrl(t.receipt);
       const dot = `<span style="color:${BIZ_COLOR[t.business] || 'inherit'}">●</span>`;
       return `<tr><td class="small c-date" style="white-space:nowrap">${dstr(t.date)}</td><td class="c-biz">${dot} ${esc(t.business)}</td>
@@ -917,6 +1014,7 @@ function renderTable() {
         <td class="small mu c-notes ${t.notes ? '' : 'hide-m'}">${esc(t.notes)}</td>
         <td class="c-flags ${flags ? '' : 'hide-m'}"><div style="display:flex;gap:4px;flex-wrap:wrap">${flags}</div></td><td class="c-rcpt ${url ? '' : 'hide-m'}">${url ? `<a href="${esc(url)}" target="_blank" rel="noopener" title="Open receipt">🧾</a>` : ''}</td></tr>`;
     }).join('') + (rows.length > (S.txLimit || (MOB() ? 25 : 150)) ? `<tr><td colspan="10" data-l="" style="justify-content:center;text-align:center!important"><button id="txMore">Show more (${rows.length - (S.txLimit || (MOB() ? 25 : 150))} left)</button></td></tr>` : '');
+  $('txTable').querySelectorAll('[data-rev]').forEach(el => el.addEventListener('click', () => openReview(el.dataset.rev)));
   const more = $('txMore');
   if (more) more.addEventListener('click', () => { S.txLimit = (S.txLimit || (MOB() ? 25 : 150)) + (MOB() ? 25 : 150); renderTable(); });
 }
@@ -929,6 +1027,396 @@ function exportCSV() {
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
   a.download = 'triangle-transactions-' + new Date().toISOString().slice(0, 10) + '.csv';
   a.click();
+}
+
+/* =====================================================================
+   FEATURES: budgets, targets, P&L, events, reviews, WhatsApp, AI review
+   ===================================================================== */
+const monthKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+const monthLabel = k => k === 'all' ? 'All time' : new Date(k + '-01T00:00:00').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+const inMonth = (t, k) => k === 'all' || monthKey(t.date) === k;
+const txKey = t => t.business + '|' + new Date(t.ts).toISOString();
+function allMonths() {
+  const s = new Set(S.tx.map(t => monthKey(t.date)));
+  s.add(monthKey(new Date()));
+  return [...s].sort().reverse();
+}
+function fillMonthSelect(id, withAll) {
+  const sel = $(id), cur = sel.value;
+  sel.innerHTML = (withAll ? '<option value="all">All time</option>' : '') + allMonths().map(k => `<option value="${k}">${monthLabel(k)}</option>`).join('');
+  if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+}
+function outCategories(biz) {
+  const s = new Set();
+  S.tx.filter(t => t.business === biz && t.direction === 'out' && t.category).forEach(t => s.add(t.category));
+  return [...s].sort();
+}
+
+/* ---------- 1. budgets ---------- */
+function budgetStatus(k) {
+  k = k || monthKey(new Date());
+  const out = [];
+  Object.entries(S.budgets || {}).forEach(([key, limit]) => {
+    limit = Number(limit); if (!limit) return;
+    const [biz, cat] = key.split('||');
+    const spent = S.tx.filter(t => t.business === biz && t.category === cat && t.direction === 'out' && inMonth(t, k)).reduce((s, t) => s + (t.amount || 0), 0);
+    out.push({ biz, cat, limit, spent, pct: spent / limit });
+  });
+  return out.sort((a, b) => b.pct - a.pct);
+}
+function renderBudgets() {
+  const k = monthKey(new Date());
+  $('budMonth').textContent = monthLabel(k);
+  const now = new Date(), dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(), pace = now.getDate() / dim;
+  const st = budgetStatus(k).filter(b => $('fBiz').value === 'all' || b.biz === $('fBiz').value);
+  if (!st.length) { $('budgets').innerHTML = '<div class="empty">No budgets set yet. Click "Edit budgets" to set a monthly limit for each spending category.</div>'; return; }
+  $('budgets').innerHTML = st.map(b => {
+    const col = b.pct > 1 ? 'var(--dn)' : b.pct >= 0.8 ? 'var(--gold)' : 'var(--up)';
+    const tag = b.pct > 1 ? `<span class="pill p-dn">Over by ${fmt(b.spent - b.limit, 0)}</span>` : b.pct >= 0.8 ? '<span class="pill p-gd">Close to limit</span>' : b.pct > pace + 0.15 ? '<span class="pill p-gd">Spending fast</span>' : '<span class="pill p-up">On track</span>';
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div class="small"><span style="color:${BIZ_COLOR[b.biz]}">●</span> ${esc(shortCat(b.cat))} <span class="mu">· ${esc(b.biz)}</span></div>${tag}</div>
+      <div style="position:relative;height:10px;background:var(--panel2);border-radius:5px;margin:6px 0">
+        <div style="width:${Math.min(b.pct, 1) * 100}%;height:10px;background:${col};border-radius:5px"></div>
+        <div title="Where spending should be by today" style="position:absolute;left:${pace * 100}%;top:-3px;width:2px;height:16px;background:var(--text);opacity:.5"></div>
+      </div>
+      <div class="small mu num">${fmt(b.spent)} of ${fmt(b.limit)} · ${pct(b.pct)}</div></div>`;
+  }).join('') + '<div class="mu small">The thin line shows where spending should be by today if it\'s spread evenly across the month.</div>';
+}
+function openBudgetEditor() {
+  const ed = $('budEditor');
+  if (!ed.classList.contains('hidden')) { ed.classList.add('hidden'); return; }
+  ed.innerHTML = BIZ.map(biz => {
+    const cats = outCategories(biz);
+    if (!cats.length) return '';
+    return `<div style="margin:10px 0 4px;font-weight:600"><span style="color:${BIZ_COLOR[biz]}">●</span> ${biz}</div>` + cats.map(c => {
+      const key = biz + '||' + c;
+      return `<div class="row small"><span>${esc(shortCat(c))}</span><input type="number" min="0" step="1" data-bud="${esc(key)}" value="${S.budgets[key] ?? ''}" placeholder="No limit" style="width:120px;text-align:right"></div>`;
+    }).join('');
+  }).join('') + `<div style="margin-top:10px;display:flex;gap:8px;align-items:center"><button class="on" id="budSave">Save budgets</button><span class="mu small" id="budMsg">Monthly limits in GH₵</span></div>`;
+  ed.classList.remove('hidden');
+  $('budSave').addEventListener('click', async () => {
+    const v = {};
+    ed.querySelectorAll('[data-bud]').forEach(i => { if (i.value !== '' && Number(i.value) > 0) v[i.dataset.bud] = Number(i.value); });
+    const { error } = await saveSetting('budgets', v);
+    if (error) { $('budMsg').textContent = 'Could not save: ' + error.message; return; }
+    S.budgets = v; ed.classList.add('hidden'); renderBudgets(); renderAdviceAndForecast();
+  });
+}
+
+/* ---------- 3. targets ---------- */
+const METRICS = { sales: 'Sales (GH₵)', units: 'Units sold', profit: 'Profit (GH₵)' };
+function targetActual(biz, metric, k) {
+  const l = S.tx.filter(t => t.business === biz && isOp(t) && inMonth(t, k));
+  if (metric === 'units') return l.filter(t => t.direction === 'in').reduce((s, t) => s + (t.qty || 0), 0);
+  const tt = totals(l);
+  return metric === 'sales' ? tt.inn : tt.net;
+}
+function ring(p, color, label) {
+  const r = 34, c = 2 * Math.PI * r, v = Math.max(0, Math.min(p, 1));
+  return `<svg viewBox="0 0 84 84" width="84" height="84" aria-hidden="true"><circle cx="42" cy="42" r="${r}" fill="none" stroke="#24242B" stroke-width="8"/>
+    ${v > 0 ? `<circle cx="42" cy="42" r="${r}" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(c * v).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 42 42)"/>` : ''}
+    <text x="42" y="47" text-anchor="middle" font-size="15" font-weight="600" fill="#ECEAE3" font-family="JetBrains Mono, monospace">${label}</text></svg>`;
+}
+function renderTargets() {
+  const k = monthKey(new Date());
+  $('tgtMonth').textContent = monthLabel(k);
+  const now = new Date(), dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(), pace = now.getDate() / dim;
+  const list = (S.targets || []).filter(t => Number(t.value) > 0 && ($('fBiz').value === 'all' || t.business === $('fBiz').value));
+  if (!list.length) { $('targets').innerHTML = '<div class="empty">No targets set yet. Click "Edit targets" to set monthly goals, for example "XEND: 10 units".</div>'; return; }
+  $('targets').innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px">' + list.map(t => {
+    const a = targetActual(t.business, t.metric, k), p = a / t.value;
+    const ok = p >= pace;
+    const fmtv = v => t.metric === 'units' ? fmt(v, 0) : fmt(v, 0);
+    return `<div style="background:var(--panel2);border-radius:12px;padding:12px;text-align:center">
+      ${ring(p, p >= 1 ? '#3DDC97' : ok ? BIZ_COLOR[t.business] : '#FF5C5C', Math.round(p * 100) + '%')}
+      <div class="small" style="font-weight:600;margin-top:6px">${esc(t.business)}</div>
+      <div class="small mu">${METRICS[t.metric]}</div>
+      <div class="small num" style="margin-top:4px">${fmtv(a)} / ${fmtv(Number(t.value))}</div>
+      <div class="small ${p >= 1 ? 'up' : ok ? 'up' : 'dn'}" style="margin-top:2px">${p >= 1 ? '🎉 Reached' : ok ? 'On pace' : `Behind · need ${fmtv(Math.max(t.value * pace - a, 0))} to catch up`}</div></div>`;
+  }).join('') + '</div>';
+}
+function openTargetEditor() {
+  const ed = $('tgtEditor');
+  if (!ed.classList.contains('hidden')) { ed.classList.add('hidden'); return; }
+  const val = (b, m) => (S.targets.find(t => t.business === b && t.metric === m) || {}).value ?? '';
+  ed.innerHTML = `<table class="small" style="margin-top:8px"><tr><th>Business</th>${Object.values(METRICS).map(m => `<th class="r">${m}</th>`).join('')}</tr>` +
+    BIZ.map(b => `<tr><td><span style="color:${BIZ_COLOR[b]}">●</span> ${b}</td>${Object.keys(METRICS).map(m => `<td class="r"><input type="number" min="0" data-tb="${esc(b)}" data-tm="${m}" value="${val(b, m)}" placeholder="—" style="width:90px;text-align:right"></td>`).join('')}</tr>`).join('') +
+    `</table><div style="margin-top:10px;display:flex;gap:8px;align-items:center"><button class="on" id="tgtSave">Save targets</button><span class="mu small" id="tgtMsg">Monthly goals. Leave blank for none.</span></div>`;
+  ed.classList.remove('hidden');
+  $('tgtSave').addEventListener('click', async () => {
+    const v = [];
+    ed.querySelectorAll('[data-tb]').forEach(i => { if (Number(i.value) > 0) v.push({ business: i.dataset.tb, metric: i.dataset.tm, value: Number(i.value) }); });
+    const { error } = await saveSetting('targets', v);
+    if (error) { $('tgtMsg').textContent = 'Could not save: ' + error.message; return; }
+    S.targets = v; ed.classList.add('hidden'); renderTargets();
+  });
+}
+
+/* ---------- 2. profit and loss ---------- */
+function prevMonthKey(k) { const d = new Date(k + '-01T00:00:00'); d.setMonth(d.getMonth() - 1); return monthKey(d); }
+function plData(k, biz) {
+  const l = S.tx.filter(t => (biz === 'all' || t.business === biz) && inMonth(t, k));
+  const inc = {}, exp = {}; let cap = 0;
+  l.forEach(t => {
+    if (t.kind === 'capital') { cap += t.amount || 0; return; }
+    const tgt = t.direction === 'in' ? inc : exp;
+    const name = shortCat(t.category) + (biz === 'all' ? ` (${t.business})` : '');
+    tgt[name] = (tgt[name] || 0) + (t.amount || 0);
+  });
+  const ti = Object.values(inc).reduce((a, b) => a + b, 0), te = Object.values(exp).reduce((a, b) => a + b, 0);
+  return { inc, exp, cap, ti, te, net: ti - te, margin: ti ? (ti - te) / ti : NaN, n: l.length };
+}
+function renderPL() {
+  fillMonthSelect('plMonth', true);
+  if (!$('plMonth').dataset.init) { $('plMonth').value = monthKey(new Date()); $('plMonth').dataset.init = 1; }
+  const k = $('plMonth').value, biz = $('plBiz').value;
+  const d = plData(k, biz), p = k === 'all' ? null : plData(prevMonthKey(k), biz);
+  const line = (name, v, pv, cls = '') => `<tr><td>${esc(name)}</td><td class="r num ${cls}">${fmt(v)}</td>${p ? `<td class="r num mu">${pv == null ? '—' : fmt(pv)}</td>` : ''}</tr>`;
+  const sect = (title, obj, pobj) => {
+    const keys = [...new Set([...Object.keys(obj), ...Object.keys(pobj || {})])].sort((a, b) => (obj[b] || 0) - (obj[a] || 0));
+    return `<tr><td colspan="3" style="padding-top:14px;font-weight:600">${title}</td></tr>` + (keys.length ? keys.map(c => line('   ' + c, obj[c] || 0, pobj ? (pobj[c] || 0) : null)).join('') : `<tr><td class="mu" colspan="3">None</td></tr>`);
+  };
+  $('pl').innerHTML = `
+    <div class="print-only" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:10px"><div class="logo">AMS</div><div><div style="font-size:18px;font-weight:600">ATMAX · Profit and loss statement</div>
+      <div>${esc(biz === 'all' ? 'All businesses (velvet Mash, Paado Island, XEND)' : biz)} · ${monthLabel(k)}</div><div style="font-size:11px">Generated ${dstr(new Date())} from the Triangle Master Cashflow records</div></div></div></div>
+    <div class="fc" style="margin-bottom:10px">
+      <div><div class="l">Income</div><div class="v up">${ghs(d.ti)}</div></div>
+      <div><div class="l">Expenses</div><div class="v dn">${ghs(d.te)}</div></div>
+      <div><div class="l">Net profit</div><div class="v ${d.net >= 0 ? 'gd' : 'dn'}">${ghs(d.net)}</div></div>
+      <div><div class="l">Margin</div><div class="v">${pct(d.margin)}</div></div>
+    </div>
+    <div class="tbl-wrap"><table class="pl-table">
+      <tr><th>${monthLabel(k)}</th><th class="r">Amount (GH₵)</th>${p ? `<th class="r">${monthLabel(prevMonthKey(k))}</th>` : ''}</tr>
+      ${sect('Income', d.inc, p && p.inc)}
+      <tr style="font-weight:600"><td>Total income</td><td class="r num up">${fmt(d.ti)}</td>${p ? `<td class="r num mu">${fmt(p.ti)}</td>` : ''}</tr>
+      ${sect('Expenses', d.exp, p && p.exp)}
+      <tr style="font-weight:600"><td>Total expenses</td><td class="r num dn">${fmt(d.te)}</td>${p ? `<td class="r num mu">${fmt(p.te)}</td>` : ''}</tr>
+      <tr style="font-weight:600;font-size:15px"><td style="padding-top:12px">Net profit</td><td class="r num ${d.net >= 0 ? 'up' : 'dn'}" style="padding-top:12px">${sgn(d.net)}</td>${p ? `<td class="r num mu" style="padding-top:12px">${sgn(p.net)}</td>` : ''}</tr>
+      <tr><td>Profit margin</td><td class="r num">${pct(d.margin)}</td>${p ? `<td class="r num mu">${pct(p.margin)}</td>` : ''}</tr>
+      ${d.cap ? `<tr><td style="padding-top:14px">Grants / investment received <span class="mu small">(capital, not income)</span></td><td class="r num bl" style="padding-top:14px">${fmt(d.cap)}</td>${p ? `<td class="r num mu">${fmt(p.cap)}</td>` : ''}</tr>` : ''}
+    </table></div>
+    <div class="mu small" style="margin-top:8px">${d.n} entries. Cash basis: money is counted when it was received or paid.</div>`;
+}
+function downloadPDF() {
+  document.body.classList.add('printing-pl');
+  setTimeout(() => { window.print(); setTimeout(() => document.body.classList.remove('printing-pl'), 500); }, 50);
+}
+
+/* ---------- 6. WhatsApp weekly summary ---------- */
+function weeklySummaryText() {
+  const now = Date.now(), from = new Date(now - 7 * DAY), pfrom = new Date(now - 14 * DAY);
+  const wk = S.tx.filter(t => t.date >= from), pw = S.tx.filter(t => t.date >= pfrom && t.date < from);
+  const T = totals(wk), P = totals(pw);
+  const arrow = (a, b) => b ? (a >= b ? '▲' : '▼') + ' ' + Math.abs(((a - b) / Math.abs(b)) * 100).toFixed(0) + '%' : '';
+  let s = `*ATMAX Triangle · weekly summary*\n${dshort(from)} – ${dshort(new Date())}\n\n`;
+  s += `💰 In: GH₵${fmt(T.inn)} ${arrow(T.inn, P.inn)}\n💸 Out: GH₵${fmt(T.out)} ${arrow(T.out, P.out)}\n📊 Net: ${T.net >= 0 ? '+' : '−'}GH₵${fmt(Math.abs(T.net))}\n`;
+  if (T.cap) s += `🎁 Grants/investment: GH₵${fmt(T.cap)}\n`;
+  s += '\n';
+  BIZ.forEach(b => {
+    const bt = totals(wk.filter(t => t.business === b));
+    const n = wk.filter(t => t.business === b).length;
+    s += `${BIZ_ICON[b]} *${b}*: ${n ? `in ${fmt(bt.inn, 0)} · out ${fmt(bt.out, 0)} · net ${bt.net >= 0 ? '+' : '−'}${fmt(Math.abs(bt.net), 0)}` : 'no entries this week'}\n`;
+  });
+  const flags = wk.filter(t => t.flags.some(f => FLAGS[f].problem)).length;
+  s += `\n🛡️ New audit flags: ${flags}`;
+  const over = budgetStatus().filter(b => b.pct > 1);
+  if (over.length) s += `\n⚠️ Over budget: ${over.map(b => shortCat(b.cat) + ' (' + b.biz + ')').join(', ')}`;
+  s += `\n\nFull dashboard: ${location.origin + location.pathname}`;
+  return s;
+}
+function shareWhatsApp() {
+  window.open('https://wa.me/?text=' + encodeURIComponent(weeklySummaryText()), '_blank', 'noopener');
+}
+
+/* ---------- 4. events (Paado Island) ---------- */
+function autoEvents() {
+  const l = S.tx.filter(t => t.business === 'Paado Island');
+  const groups = []; let cur = null;
+  l.forEach(t => {
+    if (!cur || t.date - cur.last > 5 * DAY) { cur = { from: t.date, last: t.date }; groups.push(cur); }
+    cur.last = t.date;
+  });
+  return groups.map((g, i) => ({ name: 'Period ' + (i + 1), from: g.from.toISOString().slice(0, 10), to: g.last.toISOString().slice(0, 10), auto: true }));
+}
+function eventRows() {
+  const evs = (S.events && S.events.length) ? S.events : autoEvents();
+  return evs.map(e => {
+    const f = new Date(e.from + 'T00:00:00'), to = new Date(e.to + 'T23:59:59');
+    const l = S.tx.filter(t => t.business === 'Paado Island' && t.date >= f && t.date <= to);
+    const tt = totals(l);
+    const inc = {}; l.filter(t => isOp(t) && t.direction === 'in').forEach(t => inc[shortCat(t.category)] = (inc[shortCat(t.category)] || 0) + (t.amount || 0));
+    return { ...e, ...tt, n: l.length, topInc: Object.entries(inc).sort((a, b) => b[1] - a[1])[0] };
+  });
+}
+function renderEvents() {
+  const rows = eventRows();
+  const auto = !(S.events && S.events.length);
+  if (!rows.length) { $('events').innerHTML = '<div class="empty">No Paado Island entries yet.</div>'; return; }
+  const best = rows.reduce((a, b) => (b.net > a.net ? b : a), rows[0]);
+  $('events').innerHTML = (auto ? '<div class="mu small" style="margin-bottom:8px">These are grouped automatically by date (a gap of more than 5 days starts a new period). Click "Edit events" to name them and set exact dates.</div>' : '') +
+    `<div class="chartbox sm" style="margin-bottom:10px"><canvas id="evChart"></canvas></div>
+    <div class="tbl-wrap"><table class="cards"><tr><th>Event</th><th>Dates</th><th class="r">In</th><th class="r">Out</th><th class="r">Net</th><th class="r">Margin</th><th class="r">Entries</th></tr>` +
+    rows.slice().reverse().map(r => `<tr><td data-l=""><b>${esc(r.name)}</b>${r === best && rows.length > 1 ? ' <span class="pill p-up">Best</span>' : ''}</td>
+      <td data-l="Dates" class="small mu">${dshort(new Date(r.from + 'T00:00:00'))} – ${dshort(new Date(r.to + 'T00:00:00'))}</td>
+      <td data-l="In" class="r num up">${fmt(r.inn)}</td><td data-l="Out" class="r num dn">${fmt(r.out)}</td>
+      <td data-l="Net" class="r num ${r.net >= 0 ? 'up' : 'dn'}"><b>${sgn(r.net)}</b></td><td data-l="Margin" class="r num">${pct(r.margin)}</td><td data-l="Entries" class="r num">${r.n}</td></tr>`).join('') + '</table></div>';
+  mk('evChart', {
+    type: 'bar',
+    data: { labels: rows.map(r => r.name), datasets: [
+      { label: 'In', data: rows.map(r => r.inn), backgroundColor: '#3DDC97', borderRadius: 4 },
+      { label: 'Out', data: rows.map(r => r.out), backgroundColor: '#FF5C5C', borderRadius: 4 },
+      { label: 'Net', data: rows.map(r => r.net), backgroundColor: '#F5C542', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { ticks: { callback: v => fmt(v, 0) } } }, plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8 } } } }
+  });
+}
+function openEventEditor() {
+  const ed = $('evEditor');
+  if (!ed.classList.contains('hidden')) { ed.classList.add('hidden'); return; }
+  const list = (S.events && S.events.length) ? S.events.slice() : autoEvents();
+  const rowHtml = e => `<div class="ev-row" style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) auto;gap:6px;margin-bottom:6px">
+    <input data-k="name" value="${esc(e.name || '')}" placeholder="Event name, e.g. Paado Island 4.0"><input type="date" data-k="from" value="${e.from || ''}"><input type="date" data-k="to" value="${e.to || ''}"><button data-del title="Remove">✕</button></div>`;
+  ed.innerHTML = `<div class="mu small" style="margin:8px 0">Name each event and set its dates. Include the preparation days, so marketing and setup costs count towards that event.</div>
+    <div id="evRows">${list.map(rowHtml).join('')}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button id="evAdd">+ Add event</button><button class="on" id="evSave">Save events</button><span class="mu small" id="evMsg"></span></div>`;
+  ed.classList.remove('hidden');
+  const bindDel = () => ed.querySelectorAll('[data-del]').forEach(b => b.onclick = () => b.closest('.ev-row').remove());
+  bindDel();
+  $('evAdd').onclick = () => { $('evRows').insertAdjacentHTML('beforeend', rowHtml({})); bindDel(); };
+  $('evSave').onclick = async () => {
+    const v = [...ed.querySelectorAll('.ev-row')].map(r => ({ name: r.querySelector('[data-k=name]').value.trim(), from: r.querySelector('[data-k=from]').value, to: r.querySelector('[data-k=to]').value }))
+      .filter(e => e.name && e.from && e.to).sort((a, b) => a.from.localeCompare(b.from));
+    const { error } = await saveSetting('events', v);
+    if (error) { $('evMsg').textContent = 'Could not save: ' + error.message; return; }
+    S.events = v; ed.classList.add('hidden'); renderEvents();
+  };
+}
+
+/* ---------- 5. mark as reviewed ---------- */
+function applyReviews() {
+  S.tx.forEach(t => {
+    const r = S.reviews[txKey(t)];
+    t.review = r || null;
+    t.reviewedFlags = [];
+    if (r) {
+      t.reviewedFlags = t.flags.filter(f => FLAGS[f].problem);
+      t.flags = t.flags.filter(f => !FLAGS[f].problem);
+      if (t.reviewedFlags.length) t.flags.push('reviewed');
+    }
+  });
+}
+function openReview(key) {
+  const t = S.tx.find(x => txKey(x) === key); if (!t) return;
+  const flags = (t.review ? t.reviewedFlags : t.flags.filter(f => FLAGS[f].problem)).map(f => FLAGS[f].label).join(', ');
+  $('mTitle').textContent = t.review ? 'Reviewed entry' : 'Mark as reviewed';
+  $('mBody').innerHTML = `<div class="small" style="margin-bottom:8px"><b>${esc(t.business)}</b> · ${dstr(t.date)} · ${esc(shortCat(t.category))} · <span class="num">${sgn(signed(t))}</span></div>
+    <div class="small mu" style="margin-bottom:8px">Flags: ${esc(flags || 'none')}</div>
+    ${t.review ? `<div class="small mu" style="margin-bottom:8px">Reviewed by ${esc(t.review.reviewed_by || '')} on ${dstr(new Date(t.review.reviewed_at))}</div>` : ''}`;
+  $('mReason').value = t.review ? t.review.reason : '';
+  $('mUndo').classList.toggle('hidden', !t.review);
+  $('mErr').textContent = '';
+  $('modal').dataset.key = key;
+  $('modal').classList.remove('hidden');
+  setTimeout(() => $('mReason').focus(), 50);
+}
+async function saveReview() {
+  const key = $('modal').dataset.key, reason = $('mReason').value.trim();
+  if (!reason) { $('mErr').textContent = 'Write a short reason, for example "Discount for a returning customer".'; return; }
+  const row = { tx_key: key, reason, reviewed_by: S.user, reviewed_at: new Date().toISOString() };
+  const { error } = await sb.from('tmc_reviews').upsert(row);
+  if (error) { $('mErr').textContent = 'Could not save: ' + error.message; return; }
+  S.reviews[key] = row; closeModal(); computeFlags(); render();
+}
+async function removeReview() {
+  const key = $('modal').dataset.key;
+  const { error } = await sb.from('tmc_reviews').delete().eq('tx_key', key);
+  if (error) { $('mErr').textContent = 'Could not remove: ' + error.message; return; }
+  delete S.reviews[key]; closeModal(); computeFlags(); render();
+}
+function closeModal() { $('modal').classList.add('hidden'); }
+
+/* ---------- 7. monthly review (built-in + AI) ---------- */
+function monthSummary(k) {
+  const l = S.tx.filter(t => inMonth(t, k));
+  const per = {};
+  BIZ.forEach(b => {
+    const bl = l.filter(t => t.business === b), tt = totals(bl);
+    const cats = dir => { const o = {}; bl.filter(t => isOp(t) && t.direction === dir).forEach(t => o[shortCat(t.category)] = (o[shortCat(t.category)] || 0) + (t.amount || 0)); return Object.entries(o).sort((a, c) => c[1] - a[1]).slice(0, 4).map(([c, v]) => ({ category: c, amount: +v.toFixed(2) })); };
+    per[b] = { income: +tt.inn.toFixed(2), expenses: +tt.out.toFixed(2), net: +tt.net.toFixed(2), margin: isFinite(tt.margin) ? +(tt.margin * 100).toFixed(1) : null, grants: +tt.cap.toFixed(2), entries: bl.length, top_income: cats('in'), top_costs: cats('out') };
+  });
+  const prev = k === 'all' ? null : totals(S.tx.filter(t => inMonth(t, prevMonthKey(k))));
+  const T = totals(l);
+  return {
+    month: monthLabel(k), currency: 'GHS',
+    totals: { income: +T.inn.toFixed(2), expenses: +T.out.toFixed(2), net: +T.net.toFixed(2), grants: +T.cap.toFixed(2) },
+    previous_month: prev ? { income: +prev.inn.toFixed(2), expenses: +prev.out.toFixed(2), net: +prev.net.toFixed(2) } : null,
+    businesses: per,
+    budgets: budgetStatus(k === 'all' ? monthKey(new Date()) : k).map(b => ({ business: b.biz, category: shortCat(b.cat), limit: b.limit, spent: +b.spent.toFixed(2) })),
+    targets: (S.targets || []).map(t => ({ business: t.business, metric: t.metric, target: t.value, actual: +targetActual(t.business, t.metric, k).toFixed(2) })),
+    audit: { problem_entries: l.filter(t => t.flags.some(f => FLAGS[f].problem)).length, reviewed: l.filter(t => t.flags.includes('reviewed')).length, price_mismatches: l.filter(t => t.flags.includes('price')).length }
+  };
+}
+function builtInReview(k) {
+  const m = monthSummary(k), T = m.totals, P = m.previous_month;
+  const lines = [];
+  lines.push(`<p><b>${m.month}:</b> the three businesses brought in <b>${ghs(T.income)}</b> and spent <b>${ghs(T.expenses)}</b>, a net ${T.net >= 0 ? 'profit' : 'loss'} of <b class="${T.net >= 0 ? 'up' : 'dn'}">${ghs(Math.abs(T.net))}</b>${P ? `, compared with ${ghs(P.net)} the month before` : ''}.${T.grants ? ` A further ${ghs(T.grants)} came in as grants/investment, which is not counted as profit.` : ''}</p>`);
+  const ranked = BIZ.filter(b => m.businesses[b].entries).sort((a, b) => m.businesses[b].net - m.businesses[a].net);
+  if (ranked.length) {
+    lines.push('<ul style="margin:6px 0 10px;padding-left:18px">' + ranked.map(b => {
+      const x = m.businesses[b];
+      return `<li style="margin-bottom:4px"><b>${b}</b>: net <span class="${x.net >= 0 ? 'up' : 'dn'}">${sgn(x.net)}</span>${x.margin != null ? ` (${x.margin}% margin)` : ''}. ${x.top_income[0] ? `Most income from ${esc(x.top_income[0].category)}.` : 'No income recorded.'} ${x.top_costs[0] ? `Biggest cost: ${esc(x.top_costs[0].category)} (${fmt(x.top_costs[0].amount, 0)}).` : ''}</li>`;
+    }).join('') + '</ul>');
+    const quiet = BIZ.filter(b => !m.businesses[b].entries);
+    if (quiet.length) lines.push(`<p>No entries at all for <b>${quiet.join(', ')}</b> this month. Check whether activity is being logged.</p>`);
+  } else lines.push('<p>No entries recorded for this month yet.</p>');
+  const over = m.budgets.filter(b => b.spent > b.limit);
+  if (over.length) lines.push(`<p>⚠️ Over budget: ${over.map(b => `${esc(b.category)} (${b.business}) by ${fmt(b.spent - b.limit, 0)}`).join('; ')}.</p>`);
+  const tg = m.targets.filter(t => t.target);
+  if (tg.length) lines.push(`<p>🎯 Targets: ${tg.map(t => `${t.business} · ${METRICS[t.metric]}: ${fmt(t.actual, 0)} of ${fmt(t.target, 0)}`).join('; ')}.</p>`);
+  lines.push(`<p>🛡️ Audit: ${m.audit.problem_entries} entr${m.audit.problem_entries === 1 ? 'y needs' : 'ies need'} attention${m.audit.reviewed ? `, ${m.audit.reviewed} reviewed` : ''}.</p>`);
+  return lines.join('');
+}
+function renderReview() {
+  fillMonthSelect('rvMonth', false);
+  if (!$('rvMonth').dataset.init) { $('rvMonth').value = monthKey(new Date()); $('rvMonth').dataset.init = 1; }
+  if (!$('review').dataset.ai || $('review').dataset.ai !== $('rvMonth').value) {
+    $('review').innerHTML = '<div class="small mu" style="margin-bottom:6px">Built-in summary (written from your numbers):</div><div class="small" style="line-height:1.6">' + builtInReview($('rvMonth').value) + '</div>';
+    delete $('review').dataset.ai;
+  }
+}
+function mdLite(s) {
+  return esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/^#{1,3}\s*(.+)$/gm, '<div style="font-weight:600;margin-top:10px">$1</div>')
+    .replace(/^\s*[-•]\s+(.+)$/gm, '<div style="padding-left:14px">• $1</div>').replace(/\n{2,}/g, '<br><br>').replace(/\n/g, '<br>');
+}
+async function aiReview() {
+  const k = $('rvMonth').value, btn = $('rvAI');
+  btn.textContent = 'Thinking…'; btn.disabled = true;
+  try {
+    const { data, error } = await sb.functions.invoke('tmc-ai-review', { body: { summary: monthSummary(k) } });
+    if (error || !data || !data.text) throw new Error((data && data.error) || (error && error.message) || 'No answer');
+    $('review').innerHTML = `<div class="small mu" style="margin-bottom:6px">AI review of ${monthLabel(k)}:</div><div class="small" style="line-height:1.6">${mdLite(data.text)}</div>`;
+    $('review').dataset.ai = k;
+  } catch (e) {
+    $('review').innerHTML = `<div class="adv warn"><div class="ic">ℹ️</div><p>The AI review isn't switched on yet (${esc(e.message)}). It needs an Anthropic API key added to Supabase (see the setup guide). Meanwhile, here's the built-in summary. "Copy for Claude" lets you paste this month's numbers into Claude for a full review.</p></div><div class="small" style="line-height:1.6">${builtInReview(k)}</div>`;
+  } finally { btn.textContent = 'Generate AI review'; btn.disabled = false; }
+}
+async function copyForClaude() {
+  const k = $('rvMonth').value;
+  const txt = `You are a financial advisor for ATMAX, a small Ghanaian company with three businesses: velvet Mash (advertising), Paado Island (lagoon tourism and events) and XEND (NFC smart bracelets). Review this month's figures (GH₵). Give: 1) a short overview, 2) what went well, 3) what needs attention, 4) three specific, practical actions for next month. Grants are capital, not income.\n\n${JSON.stringify(monthSummary(k), null, 2)}`;
+  try { await navigator.clipboard.writeText(txt); $('rvCopy').textContent = '✓ Copied'; }
+  catch (e) { $('rvCopy').textContent = 'Copy failed'; }
+  setTimeout(() => $('rvCopy').textContent = 'Copy for Claude', 2000);
+}
+
+/* ---------- 8. install as an app ---------- */
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; $('installBtn').classList.remove('hidden'); });
+function installApp() {
+  if (installEvt) { installEvt.prompt(); installEvt.userChoice.finally(() => { installEvt = null; $('installBtn').classList.add('hidden'); }); }
+}
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+
+function renderFeatures() {
+  renderBudgets(); renderTargets(); renderPL(); renderEvents(); renderReview();
 }
 
 /* ---------- events ---------- */
@@ -944,6 +1432,22 @@ document.querySelectorAll('#fRange button').forEach(b => b.addEventListener('cli
 $('txSearch').addEventListener('input', () => { S.txLimit = 0; renderTable(); });
 $('txFlag').addEventListener('change', e => { S.flagFilter = e.target.value; renderTable(); });
 $('csvBtn').addEventListener('click', exportCSV);
+$('budEdit').addEventListener('click', openBudgetEditor);
+$('tgtEdit').addEventListener('click', openTargetEditor);
+$('evEdit').addEventListener('click', openEventEditor);
+$('plMonth').addEventListener('change', renderPL);
+$('plBiz').addEventListener('change', renderPL);
+$('plPdf').addEventListener('click', downloadPDF);
+$('waBtn').addEventListener('click', shareWhatsApp);
+$('rvMonth').addEventListener('change', renderReview);
+$('rvAI').addEventListener('click', aiReview);
+$('rvCopy').addEventListener('click', copyForClaude);
+$('mSave').addEventListener('click', saveReview);
+$('mUndo').addEventListener('click', removeReview);
+$('mCancel').addEventListener('click', closeModal);
+$('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+$('installBtn').addEventListener('click', installApp);
 $('refreshBtn').addEventListener('click', loadData);
 $('sSave').addEventListener('click', async () => {
   const v = { large: Number($('sLarge').value) || 1000, inactive: Number($('sInactive').value) || 14, auditFrom: $('sAuditFrom').value || '' };
