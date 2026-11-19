@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Triangle Command Centre · ATMAX</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<style>
+:root{
+  --bg:#08080A; --panel:#121216; --panel2:#18181D; --line:#24242B; --line2:#33333C;
+  --text:#ECEAE3; --muted:#8C8A82; --dim:#5E5C57;
+  --gold:#F5C542; --gold-bg:#2E250A; --up:#3DDC97; --up-bg:#0F2A1F; --dn:#FF5C5C; --dn-bg:#2E1414;
+  --blue:#6FB3FF; --blue-bg:#0F1F33; --vm:#F5C542; --pi:#3DDC97; --xe:#FF7A45;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:14px}
+a{color:var(--gold)}
+button,input,select{font-family:inherit;font-size:13px;color:var(--text)}
+button{background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--gold)}
+button.on{background:var(--gold);color:#0B0B0D;border-color:var(--gold)}
+input,select{background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:7px 10px;outline:none}
+input:focus,select:focus{border-color:var(--gold)}
+.num{font-family:var(--mono)}
+.up{color:var(--up)} .dn{color:var(--dn)} .gd{color:var(--gold)} .bl{color:var(--blue)} .mu{color:var(--muted)}
+.wrap{max-width:1400px;margin:0 auto;padding:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.ptitle{display:flex;justify-content:space-between;align-items:center;margin:0 0 12px;gap:8px;flex-wrap:wrap}
+.ptitle h3{margin:0;font-size:15px;font-weight:600}
+.grid{display:grid;gap:12px}
+.g-kpi{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.g-3{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:900px){.g-2{grid-template-columns:1fr}}
+.kpi .l{font-size:12px;color:var(--muted)} .kpi .v{font-size:24px;font-weight:600;margin-top:4px;font-family:var(--mono)} .kpi .d{font-size:12px;margin-top:4px;font-family:var(--mono)}
+.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:500;white-space:nowrap}
+.p-gd{background:var(--gold-bg);color:var(--gold)} .p-up{background:var(--up-bg);color:var(--up)} .p-dn{background:var(--dn-bg);color:var(--dn)} .p-bl{background:var(--blue-bg);color:var(--blue)} .p-mu{background:var(--panel2);color:var(--muted)}
+.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--line);gap:8px}
+.row:first-child{border-top:none}
+.clickable{cursor:pointer} .clickable:hover{background:var(--panel2)}
+/* header */
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.logo{width:38px;height:38px;border-radius:9px;background:#A32D2D;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px}
+.live{width:8px;height:8px;border-radius:50%;background:var(--up);display:inline-block;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+/* ticker */
+.ticker{overflow:hidden;border-top:1px solid var(--gold);border-bottom:1px solid var(--gold);background:var(--panel);margin-bottom:12px;white-space:nowrap}
+.ticker-in{display:inline-block;padding:8px 0;animation:tick 60s linear infinite;font-family:var(--mono);font-size:12px}
+.ticker:hover .ticker-in{animation-play-state:paused}
+.ticker-in span{margin:0 18px}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+/* filters */
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.seg{display:flex;gap:4px}
+.seg button{padding:6px 10px}
+/* business cards */
+.biz{border-left:3px solid var(--gold);border-radius:0 14px 14px 0}
+.biz .net{font-size:22px;font-weight:600;font-family:var(--mono);margin:6px 0 2px}
+.spark{height:46px;margin:6px 0}
+/* advice */
+.adv{padding:10px 12px;border-radius:10px;border:1px solid var(--line);margin-bottom:8px;display:flex;gap:10px;align-items:flex-start}
+.adv .ic{font-size:16px;line-height:1.2}
+.adv p{margin:0;font-size:13px;line-height:1.5}
+.adv.danger{border-color:#5A2020;background:#1A0E0E} .adv.warn{border-color:#5A4A12;background:#17130A} .adv.good{border-color:#1E5A40;background:#0B1712} .adv.info{border-color:#1E3A5A;background:#0B121A}
+.fc{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px}
+.fc div{background:var(--panel2);border-radius:10px;padding:10px}
+.fc .l{font-size:11px;color:var(--muted)} .fc .v{font-family:var(--mono);font-size:17px;font-weight:600;margin-top:3px}
+/* heatmap */
+.heat{display:grid;grid-template-rows:repeat(7,12px);grid-auto-flow:column;grid-auto-columns:12px;gap:3px;overflow-x:auto;padding-bottom:4px}
+.heat i{border-radius:2px;background:var(--panel2);display:block}
+/* table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-weight:500;padding:8px;border-bottom:1px solid var(--line2);white-space:nowrap;position:sticky;top:0;background:var(--panel)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+#people td,#people th{font-size:12px;padding:7px 6px}
+td.r,th.r{text-align:right}
+.scroll{max-height:520px;overflow:auto}
+/* login */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+#login .box{width:100%;max-width:380px}
+#login h1{font-size:20px;margin:14px 0 4px}
+#login input{width:100%;margin-top:10px;padding:11px 12px}
+#login button{width:100%;margin-top:14px;padding:11px;background:var(--gold);color:#0B0B0D;border:none;font-weight:600}
+.err{color:var(--dn);font-size:13px;margin-top:10px;min-height:18px}
+.hidden{display:none!important}
+.small{font-size:12px}
+canvas{max-width:100%}
+.chartbox{position:relative;height:320px}
+.chartbox.sm{height:240px}
+.flagchip{cursor:pointer}
+.empty{color:var(--muted);font-size:13px;padding:10px 0}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login" class="hidden">
+  <div class="box panel">
+    <div class="logo">AMS</div>
+    <h1>Triangle <span class="gd">command centre</span></h1>
+    <div class="mu small">ATMAX · velvet Mash · Paado Island · XEND</div>
+    <form id="loginForm">
+      <input id="email" type="email" placeholder="Email" autocomplete="username" required>
+      <input id="password" type="password" placeholder="Password" autocomplete="current-password" required>
+      <button type="submit" id="loginBtn">Log in</button>
+    </form>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hidden">
+<div class="wrap">
+
+  <div class="top">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="logo">AMS</div>
+      <div>
+        <div style="font-size:18px;font-weight:600">Triangle <span class="gd">command centre</span></div>
+        <div class="mu small">ATMAX live cashflow · velvet Mash · Paado Island · XEND</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="live"></span><span class="mu small" id="syncInfo">Loading…</span>
+      <span class="pill p-mu" id="whoami"></span>
+      <button id="refreshBtn" title="Refresh now">↻ Refresh</button>
+      <button id="logoutBtn">Log out</button>
+    </div>
+  </div>
+
+  <div class="ticker"><div class="ticker-in" id="ticker"></div></div>
+
+  <div class="filters">
+    <select id="fBiz">
+      <option value="all">All businesses</option>
+      <option>velvet Mash</option><option>Paado Island</option><option>XEND</option>
+    </select>
+    <div class="seg" id="fRange">
+      <button data-r="7">7D</button><button data-r="30">30D</button><button data-r="90">90D</button>
+      <button data-r="ytd">YTD</button><button data-r="all" class="on">All</button>
+    </div>
+    <input type="date" id="fFrom" title="From"> <span class="mu">→</span> <input type="date" id="fTo" title="To">
+    <select id="fPerson"><option value="all">Everyone</option></select>
+    <label class="small mu" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+      <input type="checkbox" id="fCapital"> Include grant/investment in balance chart
+    </label>
+  </div>
+
+  <!-- KPIs -->
+  <div class="grid g-kpi" id="kpis" style="margin-bottom:12px"></div>
+
+  <!-- Main chart -->
+  <div class="panel" style="margin-bottom:12px">
+    <div class="ptitle"><h3>Running balance by business</h3><span class="mu small" id="mainNote"></span></div>
+    <div class="chartbox"><canvas id="mainChart"></canvas></div>
+  </div>
+
+  <!-- Business cards -->
+  <div class="grid g-3" id="bizCards" style="margin-bottom:12px"></div>
+
+  <!-- Advice + forecast -->
+  <div class="grid g-2" style="margin-bottom:12px">
+    <div class="panel">
+      <div class="ptitle"><h3>🧠 Advice and what's lacking</h3><span class="mu small">Recalculated on every sync</span></div>
+      <div id="advice"></div>
+    </div>
+    <div class="panel">
+      <div class="ptitle"><h3>🔮 Forecast and pre-calculations</h3><span class="mu small">Based on the last 90 days</span></div>
+      <div class="fc" id="forecast"></div>
+      <div class="chartbox"><canvas id="fcChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="grid g-2" style="margin-bottom:12px">
+    <div class="panel"><div class="ptitle"><h3>Money in vs out by month</h3></div><div class="chartbox sm"><canvas id="monthChart"></canvas></div></div>
+    <div class="panel"><div class="ptitle"><h3>Spending by category</h3></div><div class="chartbox sm"><canvas id="catChart"></canvas></div></div>
+    <div class="panel"><div class="ptitle"><h3>Payment methods</h3><span class="mu small">Money moved</span></div><div class="chartbox sm"><canvas id="methodChart"></canvas></div></div>
+    <div class="panel"><div class="ptitle"><h3>Activity heatmap</h3><span class="mu small">Entries per day · last 26 weeks</span></div><div id="heat" class="heat"></div><div class="mu small" style="margin-top:10px" id="heatNote"></div></div>
+  </div>
+
+  <!-- Audit -->
+  <div class="grid g-2" style="margin-bottom:12px">
+    <div class="panel">
+      <div class="ptitle"><h3>🛡️ Audit centre</h3><span class="pill" id="health"></span></div>
+      <div id="audit"></div>
+      <div style="margin-top:14px" id="stray"></div>
+    </div>
+    <div class="panel">
+      <div class="ptitle"><h3>🏦 Balance check</h3><span class="mu small">Type what you actually have</span></div>
+      <div id="balances"></div>
+      <div class="mu small" style="margin-top:10px">"Sheet says" = all money in minus all money out recorded for that method since tracking began. A difference means something wasn't logged, was logged twice, or there was money before tracking started.</div>
+    </div>
+  </div>
+
+  <div class="grid g-2" style="margin-bottom:12px">
+    <div class="panel">
+      <div class="ptitle"><h3>👤 People audit</h3><span class="mu small">By the email on each form entry</span></div>
+      <div class="tbl-wrap"><table id="people"></table></div>
+    </div>
+    <div class="panel">
+      <div class="ptitle"><h3>🎁 Grant and investment funds</h3><span class="mu small">Not counted as sales or profit</span></div>
+      <div id="grants"></div>
+    </div>
+  </div>
+
+  <!-- Transactions -->
+  <div class="panel" style="margin-bottom:12px">
+    <div class="ptitle">
+      <h3>All transactions <span class="mu small" id="txCount"></span></h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="txSearch" placeholder="Search category, notes, person, amount…" style="min-width:240px">
+        <select id="txFlag"><option value="">All entries</option></select>
+        <button id="csvBtn">⬇ Export CSV</button>
+      </div>
+    </div>
+    <div class="tbl-wrap scroll"><table id="txTable"></table></div>
+  </div>
+
+  <div class="panel" style="margin-bottom:24px">
+    <div class="ptitle"><h3>⚙️ Settings</h3></div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center" class="small">
+      <label>Large transaction from GH₵ <input type="number" id="sLarge" style="width:110px"></label>
+      <label>Inactive after <input type="number" id="sInactive" style="width:70px"> days</label>
+      <label>Audit entries from <input type="date" id="sAuditFrom"> <span class="mu">(older entries count as already checked; clear it to audit everything)</span></label>
+      <button id="sSave">Save settings</button><span id="sMsg" class="mu"></span>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIG — paste your Supabase project URL and anon (public) key here.
+   Supabase → Project Settings → API. The anon key is safe in the page:
+   without your login, Row Level Security returns nothing.
+   ===================================================================== */
+const SUPABASE_URL = 'https://llqoyrclevirxoxpugxb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxscW95cmNsZXZpcnhveHB1Z3hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwMjc0OTQsImV4cCI6MjExMDYwMzQ5NH0.KhoN9s5Eu4sOTA7YMy-62TPvEpFUMiATKv5QgxtFS0M';
+const REFRESH_MS = 60000;
+
+const BIZ = ['velvet Mash', 'Paado Island', 'XEND'];
+const BIZ_COLOR = { 'velvet Mash': '#F5C542', 'Paado Island': '#3DDC97', 'XEND': '#FF7A45' };
+const BIZ_ICON = { 'velvet Mash': '📣', 'Paado Island': '🛶', 'XEND': '📡' };
+const DAY = 86400000;
+
+let sb = null;
+const S = { tx: [], log: [], settings: { large: 1000, inactive: 14, auditFrom: '2026-11-19' }, balances: {}, charts: {}, range: 'all', flagFilter: '', user: '' };
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = (n, d = 2) => (Number(n) || 0).toLocaleString('en-GH', { minimumFractionDigits: d, maximumFractionDigits: d });
+const ghs = (n, d = 2) => (n < 0 ? '−' : '') + 'GH₵' + fmt(Math.abs(n), d);
+const sgn = (n, d = 2) => (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(Math.abs(n), d);
+const pct = n => (isFinite(n) ? (n * 100).toFixed(1) + '%' : '—');
+const dstr = d => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+const dshort = d => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+const daysAgo = d => Math.floor((Date.now() - d.getTime()) / DAY);
+const signed = t => (t.direction === 'out' ? -1 : 1) * (t.amount || 0);
+const isOp = t => t.kind !== 'capital';
+const shortCat = c => String(c || '—').replace(/\s*\(.*?\)\s*/g, ' ').trim();
+const methodKey = m => /mobile|momo/i.test(m) ? 'Mobile Money' : /bank/i.test(m) ? 'Bank' : /cash/i.test(m) ? 'Cash' : (m || 'Other');
+const safeUrl = u => /^https:\/\//i.test(u || '') ? u : '';
+
+/* ---------- auth ---------- */
+async function boot() {
+  if (SUPABASE_URL.includes('YOUR-PROJECT')) {
+    showLogin();
+    $('loginErr').textContent = 'Setup needed: add your Supabase URL and anon key at the top of index.html.';
+    return;
+  }
+  sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const { data } = await sb.auth.getSession();
+  if (data.session) start(data.session); else showLogin();
+  sb.auth.onAuthStateChange((ev, session) => { if (ev === 'SIGNED_OUT') location.reload(); });
+}
+function showLogin() { $('login').classList.remove('hidden'); $('app').classList.add('hidden'); }
+
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!sb) return;
+  $('loginErr').textContent = ''; $('loginBtn').textContent = 'Checking…';
+  const { data, error } = await sb.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value });
+  $('loginBtn').textContent = 'Log in';
+  if (error) { $('loginErr').textContent = 'Wrong email or password.'; return; }
+  start(data.session);
+});
+$('logoutBtn').addEventListener('click', async () => { await sb.auth.signOut(); location.reload(); });
+
+async function start(session) {
+  const { data: ok } = await sb.rpc('tmc_is_allowed');
+  if (!ok) {
+    showLogin();
+    $('loginErr').textContent = 'This account is not on the access list.';
+    await sb.auth.signOut();
+    return;
+  }
+  S.user = session.user.email;
+  $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+  $('whoami').textContent = S.user;
+  await loadSettings();
+  await loadData();
+  setInterval(loadData, REFRESH_MS);
+}
+
+/* ---------- data ---------- */
+async function loadSettings() {
+  const { data } = await sb.from('tmc_settings').select('*');
+  (data || []).forEach(r => {
+    if (r.key === 'thresholds') Object.assign(S.settings, r.value || {});
+    if (r.key === 'balances') S.balances = r.value || {};
+  });
+  $('sLarge').value = S.settings.large; $('sInactive').value = S.settings.inactive; $('sAuditFrom').value = S.settings.auditFrom || '';
+}
+async function saveSetting(key, value) {
+  return sb.from('tmc_settings').upsert({ key, value, updated_at: new Date().toISOString() });
+}
+async function loadData() {
+  try {
+    const [tx, log] = await Promise.all([
+      sb.from('tmc_transactions').select('*').order('ts', { ascending: true }).limit(10000),
+      sb.from('tmc_sync_log').select('*').order('synced_at', { ascending: false }).limit(30)
+    ]);
+    if (tx.error) throw tx.error;
+    setData(tx.data || [], log.data || []);
+  } catch (err) {
+    $('syncInfo').textContent = 'Could not load data: ' + (err.message || err);
+  }
+}
+function setData(rows, log) {
+  S.tx = rows.map(r => ({ ...r, date: new Date(r.ts), amount: r.amount == null ? null : Number(r.amount), qty: r.qty == null ? null : Number(r.qty) }))
+    .sort((a, b) => a.date - b.date);
+  S.log = log;
+  computeFlags();
+  fillPeople();
+  render();
+}
+
+/* ---------- audit flags ---------- */
+const FLAGS = {
+  receipt: { label: 'Missing receipt', cls: 'p-dn', problem: true },
+  amount: { label: 'Missing amount', cls: 'p-dn', problem: true },
+  category: { label: 'Missing category', cls: 'p-dn', problem: true },
+  qty: { label: 'Missing quantity', cls: 'p-gd', problem: true },
+  price: { label: 'Price mismatch', cls: 'p-gd', problem: true },
+  dup: { label: 'Possible duplicate', cls: 'p-gd', problem: true },
+  large: { label: 'Large transaction', cls: 'p-bl', problem: false },
+  capital: { label: 'Grant / investment', cls: 'p-bl', problem: false }
+};
+function unitPrice(cat) {
+  const m = String(cat || '').match(/GH₵\s*([\d,]+(?:\.\d+)?)/i);
+  return m ? parseFloat(m[1].replace(/,/g, '')) : null;
+}
+function auditStart() {
+  return S.settings.auditFrom ? new Date(S.settings.auditFrom + 'T00:00:00') : null;
+}
+function computeFlags() {
+  const large = Number(S.settings.large) || 1000;
+  const from = auditStart();
+  S.tx.forEach(t => { t.flags = []; t.priceDiff = 0; t.preAudit = !!(from && t.date < from); });
+  S.tx.forEach(t => {
+    if (t.kind === 'capital') t.flags.push('capital');
+    if ((t.amount || 0) >= large) t.flags.push('large');
+    if (t.preAudit) return; // entries before the audit start date are treated as already checked
+    if (!safeUrl(t.receipt)) t.flags.push('receipt');
+    if (!t.amount) t.flags.push('amount');
+    if (!t.category) t.flags.push('category');
+    if (t.qty == null && isOp(t)) t.flags.push('qty');
+    const up = t.direction === 'in' ? unitPrice(t.category) : null;
+    if (up && t.amount != null) {
+      const expected = up * (t.qty || 1);
+      if (Math.abs(expected - t.amount) >= 1) { t.flags.push('price'); t.priceDiff = t.amount - expected; t.expected = expected; }
+    }
+  });
+  // duplicates: same business, direction, category, amount — money out within 24h, money in within 2 minutes
+  // (several identical sales on the same day are normal, so sales use a much tighter window)
+  const byKey = {};
+  S.tx.forEach(t => {
+    const k = [t.business, t.direction, t.category, t.amount].join('|');
+    (byKey[k] = byKey[k] || []).push(t);
+  });
+  Object.values(byKey).forEach(list => {
+    for (let i = 1; i < list.length; i++) {
+      const win = list[i].direction === 'out' ? DAY : 2 * 60000;
+      if (!list[i].preAudit && list[i].date - list[i - 1].date < win && list[i].amount) list[i].flags.push('dup');
+    }
+  });
+}
+
+/* ---------- filters ---------- */
+function rangeBounds() {
+  const now = new Date();
+  let from = null, to = null;
+  if ($('fFrom').value) from = new Date($('fFrom').value + 'T00:00:00');
+  if ($('fTo').value) to = new Date($('fTo').value + 'T23:59:59');
+  if (!from) {
+    if (S.range === 'ytd') from = new Date(now.getFullYear(), 0, 1);
+    else if (S.range !== 'all') from = new Date(now.getTime() - Number(S.range) * DAY);
+  }
+  if (!to) to = now;
+  return { from, to };
+}
+function filtered(opts = {}) {
+  const biz = $('fBiz').value, person = $('fPerson').value;
+  const { from, to } = opts.bounds || rangeBounds();
+  return S.tx.filter(t =>
+    (biz === 'all' || t.business === biz) &&
+    (person === 'all' || t.submitter === person) &&
+    (opts.ignoreRange || ((!from || t.date >= from) && t.date <= to)));
+}
+function fillPeople() {
+  const sel = $('fPerson'), cur = sel.value;
+  const people = [...new Set(S.tx.map(t => t.submitter).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="all">Everyone</option>' + people.map(p => `<option ${p === cur ? 'selected' : ''}>${esc(p)}</option>`).join('');
+}
+function totals(list) {
+  let inn = 0, out = 0, cap = 0;
+  list.forEach(t => {
+    if (t.kind === 'capital') cap += t.amount || 0;
+    else if (t.direction === 'in') inn += t.amount || 0;
+    else out += t.amount || 0;
+  });
+  return { inn, out, cap, net: inn - out, margin: inn ? (inn - out) / inn : NaN };
+}
+
+/* ---------- render ---------- */
+function render() {
+  renderSyncInfo();
+  renderTicker();
+  renderKPIs();
+  renderMain();
+  renderBizCards();
+  renderAdviceAndForecast();
+  renderMonth(); renderCat(); renderMethod(); renderHeat();
+  renderAudit(); renderBalances(); renderPeople(); renderGrants();
+  renderTable();
+}
+
+function renderSyncInfo() {
+  const last = S.log[0];
+  $('syncInfo').textContent = last ? `Live · last sync ${timeAgo(new Date(last.synced_at))} · ${S.tx.length} entries` : `Live · ${S.tx.length} entries · waiting for first sync`;
+}
+function timeAgo(d) {
+  const s = Math.floor((Date.now() - d) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + ' min ago';
+  if (s < 86400) return Math.floor(s / 3600) + ' h ago';
+  return Math.floor(s / 86400) + ' d ago';
+}
+
+function renderTicker() {
+  const recent = S.tx.slice(-14).reverse();
+  if (!recent.length) { $('ticker').innerHTML = '<span class="mu">No entries yet</span>'; return; }
+  const all = totals(S.tx);
+  const items = recent.map(t => {
+    const cls = t.kind === 'capital' ? 'bl' : t.direction === 'in' ? 'up' : 'dn';
+    const arrow = t.direction === 'in' ? '▲' : '▼';
+    return `<span><span class="gd">${esc(t.business.toUpperCase())}</span> <span class="${cls}">${arrow} ${sgn(signed(t))}</span> <span class="mu">${esc(shortCat(t.category))} · ${dshort(t.date)}</span></span>`;
+  });
+  items.unshift(`<span><span class="gd">NET (ALL TIME)</span> <span class="${all.net >= 0 ? 'up' : 'dn'}">${all.net >= 0 ? '▲' : '▼'} ${sgn(all.net)}</span></span>`);
+  const html = items.join('');
+  $('ticker').innerHTML = html + html; // doubled for a seamless loop
+}
+
+function delta(cur, prev, invert) {
+  if (!isFinite(prev) || prev === 0 || !isFinite(cur)) return '<span class="mu">—</span>';
+  const ch = (cur - prev) / Math.abs(prev);
+  const good = invert ? ch < 0 : ch > 0;
+  return `<span class="${good ? 'up' : 'dn'}">${ch >= 0 ? '▲' : '▼'} ${Math.abs(ch * 100).toFixed(1)}%</span> <span class="mu">vs previous</span>`;
+}
+function renderKPIs() {
+  const b = rangeBounds();
+  const cur = totals(filtered());
+  let prev = null;
+  if (b.from) {
+    const len = b.to - b.from;
+    prev = totals(filtered({ bounds: { from: new Date(b.from - len), to: b.from } }));
+  }
+  const cash = totals(filtered({ ignoreRange: true }));
+  const cashOnHand = cash.net + cash.cap;
+  const k = [
+    ['Money in (sales)', ghs(cur.inn), prev ? delta(cur.inn, prev.inn) : '<span class="mu">All time</span>', 'up'],
+    ['Money out', ghs(cur.out), prev ? delta(cur.out, prev.out, true) : '<span class="mu">All time</span>', 'dn'],
+    ['Net profit', ghs(cur.net), prev ? delta(cur.net, prev.net) : '<span class="mu">Operations only</span>', cur.net >= 0 ? 'gd' : 'dn'],
+    ['Profit margin', pct(cur.margin), prev ? (isFinite(prev.margin) && isFinite(cur.margin) ? `<span class="${cur.margin >= prev.margin ? 'up' : 'dn'}">${cur.margin >= prev.margin ? '▲' : '▼'} ${Math.abs((cur.margin - prev.margin) * 100).toFixed(1)} pts</span>` : '<span class="mu">—</span>') : '<span class="mu">Net ÷ money in</span>', ''],
+    ['Grants / investment', ghs(cur.cap), '<span class="mu">Not counted as profit</span>', 'bl'],
+    ['Cash position', ghs(cashOnHand), '<span class="mu">All time, incl. grants</span>', cashOnHand >= 0 ? 'gd' : 'dn']
+  ];
+  $('kpis').innerHTML = k.map(([l, v, d, c]) => `<div class="panel kpi"><div class="l">${l}</div><div class="v ${c}">${v}</div><div class="d">${d}</div></div>`).join('');
+}
+
+/* chart defaults */
+Chart.defaults.color = '#8C8A82';
+Chart.defaults.borderColor = '#24242B';
+Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+Chart.defaults.plugins.tooltip.backgroundColor = '#18181D';
+Chart.defaults.plugins.tooltip.borderColor = '#33333C';
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+function mk(id, cfg) {
+  if (S.charts[id]) S.charts[id].destroy();
+  S.charts[id] = new Chart($(id), cfg);
+  return S.charts[id];
+}
+function balanceSeries(biz, includeCap, bounds, person) {
+  const list = S.tx.filter(t => t.business === biz && (person === 'all' || t.submitter === person) && (includeCap || isOp(t)));
+  let bal = 0; const pts = [];
+  list.forEach(t => {
+    bal += signed(t);
+    if (!bounds.from || t.date >= bounds.from) { if (t.date <= bounds.to) pts.push({ x: t.date, y: +bal.toFixed(2), t }); }
+  });
+  // opening point at range start
+  if (bounds.from) {
+    const before = list.filter(t => t.date < bounds.from).reduce((s, t) => s + signed(t), 0);
+    pts.unshift({ x: bounds.from, y: +before.toFixed(2) });
+  }
+  if (pts.length) pts.push({ x: bounds.to, y: pts[pts.length - 1].y });
+  return pts;
+}
+function renderMain() {
+  const b = rangeBounds(), cap = $('fCapital').checked, biz = $('fBiz').value, person = $('fPerson').value;
+  const shown = biz === 'all' ? BIZ : [biz];
+  $('mainNote').textContent = cap ? 'Includes grants and investment' : 'Operations only (grants excluded)';
+  mk('mainChart', {
+    type: 'line',
+    data: {
+      datasets: shown.map(n => ({
+        label: n, data: balanceSeries(n, cap, b, person), borderColor: BIZ_COLOR[n], backgroundColor: BIZ_COLOR[n] + '22',
+        borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0, fill: shown.length === 1
+      }))
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { mode: 'nearest', intersect: false },
+      scales: {
+        x: { type: 'time', time: { tooltipFormat: 'dd MMM yyyy HH:mm' }, grid: { display: false }, ticks: { maxTicksLimit: 10, maxRotation: 0 } },
+        y: { ticks: { callback: v => 'GH₵' + fmt(v, 0) } }
+      },
+      plugins: {
+        legend: { labels: { usePointStyle: true, boxWidth: 8 } },
+        tooltip: { callbacks: { label: c => { const t = c.raw.t; return `${c.dataset.label}: ${ghs(c.raw.y)}` + (t ? `  (${sgn(signed(t))} · ${shortCat(t.category)})` : ''); } } }
+      }
+    }
+  });
+}
+
+function renderBizCards() {
+  const b = rangeBounds(), person = $('fPerson').value;
+  $('bizCards').innerHTML = BIZ.map(n => {
+    const list = filtered().filter(t => t.business === n);
+    const all = S.tx.filter(t => t.business === n);
+    const tt = totals(list);
+    const last = all.length ? all[all.length - 1].date : null;
+    const outs = {}; list.filter(t => isOp(t) && t.direction === 'out').forEach(t => outs[shortCat(t.category)] = (outs[shortCat(t.category)] || 0) + (t.amount || 0));
+    const top = Object.entries(outs).sort((a, c) => c[1] - a[1])[0];
+    const days = {}; list.filter(isOp).forEach(t => { const k = t.date.toDateString(); days[k] = (days[k] || 0) + signed(t); });
+    const dayArr = Object.entries(days).sort((a, c) => c[1] - a[1]);
+    const inactive = last && daysAgo(last) > S.settings.inactive;
+    const flags = list.filter(t => t.flags.some(f => FLAGS[f].problem)).length;
+    return `<div class="panel biz" style="border-left-color:${BIZ_COLOR[n]}">
+      <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:600">${BIZ_ICON[n]} ${n}</div>
+      ${inactive ? `<span class="pill p-dn">Inactive ${daysAgo(last)}d</span>` : `<span class="pill p-up">Active</span>`}</div>
+      <div class="net ${tt.net >= 0 ? 'up' : 'dn'}">${sgn(tt.net)}</div>
+      <div class="mu small num">In ${fmt(tt.inn)} · Out ${fmt(tt.out)} · Margin ${pct(tt.margin)}</div>
+      <div class="spark"><canvas id="sp-${n.replace(/\s/g, '')}"></canvas></div>
+      <div class="small" style="display:grid;gap:4px">
+        <div class="mu">Top cost: <span style="color:var(--text)">${top ? esc(top[0]) + ' · ' + fmt(top[1]) : '—'}</span></div>
+        <div class="mu">Best day: <span class="up">${dayArr.length ? dshort(new Date(dayArr[0][0])) + ' · ' + sgn(dayArr[0][1]) : '—'}</span> · Worst: <span class="dn">${dayArr.length ? dshort(new Date(dayArr[dayArr.length - 1][0])) + ' · ' + sgn(dayArr[dayArr.length - 1][1]) : '—'}</span></div>
+        <div class="mu">Last entry: <span style="color:var(--text)">${last ? dstr(last) : '—'}</span> · Flags: <span class="${flags ? 'gd' : 'up'}">${flags}</span>${tt.cap ? ` · Grant: <span class="bl">${fmt(tt.cap)}</span>` : ''}</div>
+      </div></div>`;
+  }).join('');
+  BIZ.forEach(n => {
+    const pts = balanceSeries(n, false, b, person);
+    mk('sp-' + n.replace(/\s/g, ''), {
+      type: 'line', data: { datasets: [{ data: pts, borderColor: BIZ_COLOR[n], borderWidth: 1.5, pointRadius: 0, tension: 0.3, fill: true, backgroundColor: BIZ_COLOR[n] + '18' }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { type: 'time', display: false }, y: { display: false } } }
+    });
+  });
+}
+
+/* ---------- advice + forecast ---------- */
+function linreg(points) {
+  const n = points.length; if (n < 2) return null;
+  let sx = 0, sy = 0, sxy = 0, sxx = 0;
+  points.forEach(([x, y]) => { sx += x; sy += y; sxy += x * y; sxx += x * x; });
+  const d = n * sxx - sx * sx; if (!d) return null;
+  const m = (n * sxy - sx * sy) / d; return { m, b: (sy - m * sx) / n };
+}
+function renderAdviceAndForecast() {
+  const biz = $('fBiz').value;
+  const scope = S.tx.filter(t => biz === 'all' || t.business === biz);
+  const now = Date.now(), d90 = new Date(now - 90 * DAY);
+  const last90 = scope.filter(t => t.date >= d90);
+  const ops90 = last90.filter(isOp);
+  const t90 = totals(ops90);
+  const burn = t90.out / 3, income = t90.inn / 3;
+  const all = totals(scope);
+  const cash = all.net + all.cap;
+  const runway = burn > 0 ? cash / burn : Infinity;
+
+  // forecast: regression on daily cumulative operating net (last 90 days)
+  const byDay = {}; let cum = scope.filter(t => isOp(t) && t.date < d90).reduce((s, t) => s + signed(t), 0);
+  const startCum = cum;
+  ops90.forEach(t => { cum += signed(t); byDay[Math.floor((t.date - d90) / DAY)] = cum; });
+  const pts = []; let run = startCum;
+  for (let i = 0; i <= 90; i++) { if (byDay[i] != null) run = byDay[i]; pts.push([i, run]); }
+  const lr = linreg(pts);
+  const slope = lr ? lr.m : 0;
+  const proj30 = slope * 30, proj90 = slope * 90;
+
+  // XEND break-even
+  const x90 = S.tx.filter(t => t.business === 'XEND' && t.date >= d90 && isOp(t));
+  const xSales = x90.filter(t => t.direction === 'in' && t.amount && t.qty);
+  const xUnits = xSales.reduce((s, t) => s + t.qty, 0);
+  const xAvg = xUnits ? xSales.reduce((s, t) => s + t.amount, 0) / xUnits : 0;
+  const xBurn = x90.filter(t => t.direction === 'out').reduce((s, t) => s + (t.amount || 0), 0) / 3;
+  const beUnits = xAvg ? Math.ceil(xBurn / xAvg) : null;
+
+  $('forecast').innerHTML = [
+    ['Avg monthly income', ghs(income, 0), 'up'],
+    ['Avg monthly spend (burn)', ghs(burn, 0), 'dn'],
+    ['Trend · next 30 days', (proj30 >= 0 ? '+' : '−') + 'GH₵' + fmt(Math.abs(proj30), 0), proj30 >= 0 ? 'up' : 'dn'],
+    ['Trend · next 90 days', (proj90 >= 0 ? '+' : '−') + 'GH₵' + fmt(Math.abs(proj90), 0), proj90 >= 0 ? 'up' : 'dn'],
+    ['Cash runway', isFinite(runway) ? (runway > 60 ? '60+ months' : runway.toFixed(1) + ' months') : 'No spending', 'gd'],
+    ['XEND break-even', beUnits != null ? beUnits + ' units/mo' : '—', 'bl']
+  ].map(([l, v, c]) => `<div><div class="l">${l}</div><div class="v ${c}">${v}</div></div>`).join('');
+
+  // forecast chart: actual last 90 + projected 30
+  const actual = pts.map(([i, y]) => ({ x: new Date(d90.getTime() + i * DAY), y: +y.toFixed(2) }));
+  const lastY = actual.length ? actual[actual.length - 1].y : 0;
+  const proj = [{ x: new Date(now), y: lastY }, { x: new Date(now + 30 * DAY), y: +(lastY + proj30).toFixed(2) }];
+  mk('fcChart', {
+    type: 'line',
+    data: { datasets: [
+      { label: 'Actual (operations)', data: actual, borderColor: '#F5C542', backgroundColor: '#F5C54218', fill: true, borderWidth: 2, pointRadius: 0, stepped: 'before' },
+      { label: 'Projected', data: proj, borderColor: '#6FB3FF', borderDash: [6, 4], borderWidth: 2, pointRadius: 3 }
+    ] },
+    options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'time', grid: { display: false }, ticks: { maxTicksLimit: 6, maxRotation: 0 } }, y: { ticks: { callback: v => fmt(v, 0) } } }, plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8 } } } }
+  });
+
+  // advice rules
+  const A = [];
+  const add = (sev, ic, html) => A.push({ sev, ic, html });
+  const rank = { danger: 0, warn: 1, info: 2, good: 3 };
+  const per = filtered();
+  (biz === 'all' ? BIZ : [biz]).forEach(n => {
+    const l = per.filter(t => t.business === n), tt = totals(l);
+    if (!l.length) return;
+    const outs = {}; l.filter(t => isOp(t) && t.direction === 'out').forEach(t => outs[shortCat(t.category)] = (outs[shortCat(t.category)] || 0) + (t.amount || 0));
+    const top = Object.entries(outs).sort((a, c) => c[1] - a[1])[0];
+    if (tt.net < 0) add('danger', '🔻', `<b>${n}</b> spent more than it earned in this period (${ghs(tt.net)}).${top ? ` The biggest cost was <b>${esc(top[0])}</b> (${ghs(top[1])}).` : ''}`);
+    else if (tt.inn > 0 && tt.margin >= 0.4) add('good', '✅', `<b>${n}</b> is running a healthy ${pct(tt.margin)} margin in this period.`);
+    if (top && tt.out > 0 && Object.keys(outs).length > 1 && top[1] / tt.out > 0.5) add('warn', '🔍', `<b>${esc(top[0])}</b> is ${pct(top[1] / tt.out)} of ${n}'s spending. Check whether that cost can be reduced, shared or spread out.`);
+    const lastAll = S.tx.filter(t => t.business === n).slice(-1)[0];
+    if (lastAll && daysAgo(lastAll.date) > S.settings.inactive) add('warn', '⏰', `No entries for <b>${n}</b> in ${daysAgo(lastAll.date)} days. Either nothing happened or entries aren't being logged.`);
+  });
+  const priceLoss = scope.filter(t => t.flags.includes('price') && t.priceDiff < 0);
+  if (priceLoss.length) add('warn', '💲', `${priceLoss.length} sale(s) were recorded below list price, a total of <b>${ghs(-priceLoss.reduce((s, t) => s + t.priceDiff, 0))}</b> less than expected. If these were discounts, note them in the form so the audit can tell.`);
+  const miss = k => scope.filter(t => t.flags.includes(k)).length;
+  if (miss('receipt')) add('danger', '🧾', `${miss('receipt')} entr${miss('receipt') === 1 ? 'y has' : 'ies have'} no receipt. Without one, the money can't be verified.`);
+  if (miss('amount')) add('danger', '❓', `${miss('amount')} entr${miss('amount') === 1 ? 'y has' : 'ies have'} no amount. These count as zero until fixed.`);
+  if (miss('qty')) add('info', '🔢', `${miss('qty')} entries have no quantity. Make quantity required in the Google Forms so unit costs and prices can be tracked.`);
+  if (miss('dup')) add('warn', '🔁', `${miss('dup')} possible duplicate entr${miss('dup') === 1 ? 'y' : 'ies'} (same amount and category within 24 hours). Check that each one is real.`);
+  const methods = {}; let moved = 0;
+  scope.forEach(t => { methods[methodKey(t.method)] = (methods[methodKey(t.method)] || 0) + (t.amount || 0); moved += t.amount || 0; });
+  if (moved && (methods.Cash || 0) / moved > 0.5) add('info', '💵', `${pct(methods.Cash / moved)} of money moved is cash, which is the hardest to audit. Use Mobile Money or bank where you can.`);
+  if (burn > 0) {
+    if (runway < 3) add('danger', '⛽', `At the current spending rate (${ghs(burn, 0)}/month), cash lasts about <b>${runway.toFixed(1)} months</b>.`);
+    else if (isFinite(runway)) add('good', '⛽', `Cash covers about <b>${runway > 60 ? '60+' : runway.toFixed(1)} months</b> of spending at the current rate (${ghs(burn, 0)}/month).`);
+  }
+  if (lr && Math.abs(proj30) > 1) add(proj30 >= 0 ? 'good' : 'warn', proj30 >= 0 ? '📈' : '📉', `On the 90-day trend, operating profit will ${proj30 >= 0 ? 'grow' : 'fall'} by about <b>${ghs(Math.abs(proj30), 0)}</b> in the next 30 days.`);
+  if ((biz === 'all' || biz === 'XEND') && beUnits != null) {
+    const sold = xUnits / 3;
+    add(sold >= beUnits ? 'good' : 'warn', '📡', `XEND needs about <b>${beUnits} sales a month</b> at its average price (${ghs(xAvg)}) to cover its costs. In the last 90 days it averaged <b>${sold.toFixed(1)}</b> a month.`);
+  }
+  const caps = scope.filter(t => t.kind === 'capital');
+  caps.forEach(c => {
+    const spent = S.tx.filter(t => t.business === c.business && t.direction === 'out' && t.date >= c.date).reduce((s, t) => s + (t.amount || 0), 0);
+    const left = (c.amount || 0) - spent;
+    const bBurn = S.tx.filter(t => t.business === c.business && t.direction === 'out' && t.date >= d90).reduce((s, t) => s + (t.amount || 0), 0) / 3;
+    add('info', '🎁', `The ${ghs(c.amount, 0)} grant to <b>${esc(c.business)}</b> (${dshort(c.date)}): ${ghs(Math.max(left, 0), 0)} left${bBurn > 0 ? `, about ${(Math.max(left, 0) / bBurn).toFixed(1)} months at ${c.business}'s current spending` : ''}. Plan what it should be spent on before it gets absorbed into day-to-day costs.`);
+  });
+  const wd = [0, 0, 0, 0, 0, 0, 0];
+  scope.filter(t => isOp(t) && t.direction === 'in').forEach(t => wd[t.date.getDay()] += t.amount || 0);
+  const best = wd.indexOf(Math.max(...wd));
+  if (Math.max(...wd) > 0) add('info', '📅', `Most income comes in on <b>${['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'][best]}</b>. Plan staff, stock and promotion around that day.`);
+  const strayCount = latestStray().length;
+  if (strayCount && !S.settings.auditFrom) add('warn', '🧹', `${strayCount} row(s) in the sheet aren't form entries (for example, typed notes). They're ignored. Move notes into the Reference/Notes column instead.`);
+
+  A.sort((a, c) => rank[a.sev] - rank[c.sev]);
+  $('advice').innerHTML = A.length ? A.map(a => `<div class="adv ${a.sev}"><div class="ic">${a.ic}</div><p>${a.html}</p></div>`).join('') : '<div class="empty">Nothing to flag. Everything looks in order.</div>';
+}
+
+/* ---------- charts ---------- */
+function renderMonth() {
+  const list = filtered().filter(isOp), m = {};
+  list.forEach(t => { const k = t.date.getFullYear() + '-' + String(t.date.getMonth() + 1).padStart(2, '0'); m[k] = m[k] || { i: 0, o: 0 }; m[k][t.direction === 'in' ? 'i' : 'o'] += t.amount || 0; });
+  const keys = Object.keys(m).sort();
+  mk('monthChart', {
+    type: 'bar',
+    data: { labels: keys.map(k => new Date(k + '-01').toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })),
+      datasets: [{ label: 'In', data: keys.map(k => m[k].i), backgroundColor: '#3DDC97', borderRadius: 4 }, { label: 'Out', data: keys.map(k => m[k].o), backgroundColor: '#FF5C5C', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { ticks: { callback: v => fmt(v, 0) } } }, plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8 } } } }
+  });
+}
+function renderCat() {
+  const c = {};
+  filtered().filter(t => isOp(t) && t.direction === 'out').forEach(t => c[shortCat(t.category)] = (c[shortCat(t.category)] || 0) + (t.amount || 0));
+  const e = Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  mk('catChart', {
+    type: 'bar',
+    data: { labels: e.map(x => x[0].length > 28 ? x[0].slice(0, 27) + '…' : x[0]), datasets: [{ data: e.map(x => x[1]), backgroundColor: '#F5C542', borderRadius: 4 }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ghs(c.raw) } } }, scales: { x: { ticks: { callback: v => fmt(v, 0) } }, y: { grid: { display: false } } } }
+  });
+}
+function renderMethod() {
+  const m = {};
+  filtered().forEach(t => m[methodKey(t.method)] = (m[methodKey(t.method)] || 0) + (t.amount || 0));
+  const e = Object.entries(m);
+  const col = { 'Cash': '#F5C542', 'Mobile Money': '#3DDC97', 'Bank': '#6FB3FF' };
+  mk('methodChart', {
+    type: 'doughnut',
+    data: { labels: e.map(x => x[0]), datasets: [{ data: e.map(x => x[1]), backgroundColor: e.map(x => col[x[0]] || '#8C8A82'), borderColor: '#121216', borderWidth: 3 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8 } }, tooltip: { callbacks: { label: c => `${c.label}: ${ghs(c.raw)}` } } } }
+  });
+}
+function renderHeat() {
+  const list = filtered({ ignoreRange: true }), cnt = {};
+  list.forEach(t => { const k = t.date.toDateString(); cnt[k] = (cnt[k] || 0) + 1; });
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const start = new Date(today.getTime() - (25 * 7 + today.getDay()) * DAY);
+  let html = '', active = 0, max = Math.max(1, ...Object.values(cnt));
+  for (let d = new Date(start); d <= today; d = new Date(d.getTime() + DAY)) {
+    const n = cnt[d.toDateString()] || 0; if (n) active++;
+    const a = n ? 0.25 + 0.75 * (n / max) : 0;
+    html += `<i title="${dstr(d)}: ${n} entr${n === 1 ? 'y' : 'ies'}" style="${n ? `background:rgba(61,220,151,${a.toFixed(2)})` : ''}"></i>`;
+  }
+  $('heat').innerHTML = html;
+  $('heatNote').textContent = `${active} active days out of the last 26 weeks.`;
+}
+
+/* ---------- audit ---------- */
+function latestStray() {
+  const seen = {}, out = [];
+  const SUMMARY_RE = /summary|total|cross-check|text match|net cash flow|^\s*(inflows|outflows)\b/i; // formula rows under the data
+  S.log.forEach(l => { if (seen[l.business]) return; seen[l.business] = 1; (l.stray_rows || []).filter(r => !SUMMARY_RE.test(r.text || '')).forEach(r => out.push({ ...r, business: l.business })); });
+  return out;
+}
+function renderAudit() {
+  const list = filtered();
+  const problem = list.filter(t => t.flags.some(f => FLAGS[f].problem)).length;
+  const health = list.length ? Math.round(100 * (1 - problem / list.length)) : 100;
+  const h = $('health');
+  h.textContent = 'Data health ' + health + '%';
+  h.className = 'pill ' + (health >= 90 ? 'p-up' : health >= 70 ? 'p-gd' : 'p-dn');
+  $('audit').innerHTML = Object.entries(FLAGS).map(([k, f]) => {
+    const n = list.filter(t => t.flags.includes(k)).length;
+    const cls = n === 0 ? 'p-up' : f.cls;
+    return `<div class="row clickable" data-flag="${k}" style="padding:8px 6px;border-radius:6px"><span>${f.label}${k === 'large' ? ` <span class="mu small">(from GH₵${fmt(S.settings.large, 0)})</span>` : ''}</span><span class="pill ${cls}">${n}</span></div>`;
+  }).join('') + `<div class="mu small" style="margin-top:6px">${auditStart() ? `Checking entries from <b>${dstr(auditStart())}</b> onwards. Older entries count as already checked. ` : ''}Click a line to see those entries in the table below.</div>`;
+  document.querySelectorAll('#audit [data-flag]').forEach(el => el.addEventListener('click', () => {
+    $('txFlag').value = el.dataset.flag; S.flagFilter = el.dataset.flag; renderTable();
+    $('txTable').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+  const stray = latestStray();
+  $('stray').innerHTML = stray.length ? `<div class="small" style="font-weight:500;margin-bottom:6px">🧹 Stray rows in the sheet (ignored by the dashboard)</div>` +
+    stray.map(s => `<div class="row small"><span>${esc(s.business)} · row ${s.row}</span><span class="mu">${esc(s.text)}</span></div>`).join('') : '';
+}
+function renderBalances() {
+  const exp = { 'Cash': 0, 'Mobile Money': 0, 'Bank': 0 };
+  filtered({ ignoreRange: true }).forEach(t => { const k = methodKey(t.method); exp[k] = (exp[k] || 0) + signed(t); });
+  const keys = Object.keys(exp);
+  $('balances').innerHTML = `<table><tr><th>Method</th><th class="r">Sheet says</th><th class="r">You actually have</th><th class="r">Difference</th></tr>` +
+    keys.map(k => {
+      const act = S.balances[k];
+      const diff = act === undefined || act === '' || act === null ? null : Number(act) - exp[k];
+      return `<tr><td>${esc(k)}</td><td class="r num">${ghs(exp[k])}</td>
+      <td class="r"><input type="number" step="0.01" data-bal="${esc(k)}" value="${act ?? ''}" style="width:120px;text-align:right" placeholder="Enter"></td>
+      <td class="r num ${diff == null ? 'mu' : Math.abs(diff) < 1 ? 'up' : 'dn'}">${diff == null ? '—' : Math.abs(diff) < 1 ? '✓ Matches' : sgn(diff)}</td></tr>`;
+    }).join('') + `</table><div style="margin-top:10px;display:flex;gap:8px;align-items:center"><button id="balSave">Save balances</button><span class="mu small" id="balMsg">${S.balances._at ? 'Last checked ' + dstr(new Date(S.balances._at)) : ''}</span></div>`;
+  $('balSave').addEventListener('click', async () => {
+    const v = { _at: new Date().toISOString() };
+    document.querySelectorAll('[data-bal]').forEach(i => { if (i.value !== '') v[i.dataset.bal] = Number(i.value); });
+    const { error } = await saveSetting('balances', v);
+    if (error) { $('balMsg').textContent = 'Could not save: ' + error.message; return; }
+    S.balances = v; renderBalances();
+  });
+}
+function renderPeople() {
+  const list = filtered(), p = {};
+  list.forEach(t => {
+    const k = t.submitter || '(no email)';
+    p[k] = p[k] || { n: 0, i: 0, o: 0, f: 0, last: t.date, biz: new Set() };
+    const r = p[k]; r.n++; r.biz.add(t.business);
+    if (isOp(t)) { if (t.direction === 'in') r.i += t.amount || 0; else r.o += t.amount || 0; }
+    if (t.flags.some(f => FLAGS[f].problem)) r.f++;
+    if (t.date > r.last) r.last = t.date;
+  });
+  const e = Object.entries(p).sort((a, b) => b[1].n - a[1].n);
+  $('people').innerHTML = e.length ? `<tr><th>Person</th><th>Logs for</th><th class="r">Entries</th><th class="r">In</th><th class="r">Out</th><th class="r">Flags</th><th class="r">Last entry</th></tr>` +
+    e.map(([k, r]) => `<tr class="clickable" data-person="${esc(k)}"><td>${esc(k)}</td><td class="mu small">${[...r.biz].map(esc).join(', ')}</td><td class="r num">${r.n}</td><td class="r num up">${fmt(r.i)}</td><td class="r num dn">${fmt(r.o)}</td>
+      <td class="r"><span class="pill ${r.f ? (r.f / r.n > 0.3 ? 'p-dn' : 'p-gd') : 'p-up'}">${r.f} · ${pct(r.f / r.n)}</span></td><td class="r small ${daysAgo(r.last) > S.settings.inactive ? 'dn' : 'mu'}">${dshort(r.last)} · ${daysAgo(r.last)}d</td></tr>`).join('')
+    : '<tr><td class="empty">No entries in this period.</td></tr>';
+  document.querySelectorAll('#people [data-person]').forEach(el => el.addEventListener('click', () => {
+    const v = el.dataset.person; if ([...$('fPerson').options].some(o => o.value === v)) { $('fPerson').value = v; render(); }
+  }));
+}
+function renderGrants() {
+  const caps = S.tx.filter(t => t.kind === 'capital' && ($('fBiz').value === 'all' || t.business === $('fBiz').value));
+  if (!caps.length) { $('grants').innerHTML = '<div class="empty">No grants or investments recorded.</div>'; return; }
+  $('grants').innerHTML = caps.map(c => {
+    const outs = S.tx.filter(t => t.business === c.business && t.direction === 'out' && t.date >= c.date);
+    const spent = outs.reduce((s, t) => s + (t.amount || 0), 0);
+    const left = Math.max((c.amount || 0) - spent, 0);
+    const used = c.amount ? Math.min(spent / c.amount, 1) : 0;
+    const cats = {}; outs.forEach(t => cats[shortCat(t.category)] = (cats[shortCat(t.category)] || 0) + (t.amount || 0));
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between"><div><b>${esc(c.business)}</b> <span class="mu small">· ${dstr(c.date)} · ${esc(c.method)}</span></div><div class="num bl">${ghs(c.amount)}</div></div>
+      <div style="height:8px;background:var(--panel2);border-radius:4px;margin:8px 0"><div style="width:${(used * 100).toFixed(1)}%;height:8px;background:var(--gold);border-radius:4px"></div></div>
+      <div class="small mu">Spent since: <span class="dn num">${fmt(spent)}</span> · Left: <span class="up num">${fmt(left)}</span> · ${pct(used)} used</div>
+      ${Object.keys(cats).length ? `<div class="small mu" style="margin-top:4px">Spent on: ${Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([k, v]) => esc(k) + ' ' + fmt(v, 0)).join(' · ')}</div>` : '<div class="small mu" style="margin-top:4px">Nothing spent from it yet.</div>'}
+    </div>`;
+  }).join('') + '<div class="mu small">"Spent since" counts all of that business\'s spending after the grant arrived.</div>';
+}
+
+/* ---------- table ---------- */
+function tableRows() {
+  const q = $('txSearch').value.trim().toLowerCase();
+  return filtered().filter(t => (!S.flagFilter || t.flags.includes(S.flagFilter)) &&
+    (!q || [t.business, t.category, t.notes, t.submitter, t.method, String(t.amount)].join(' ').toLowerCase().includes(q))).slice().reverse();
+}
+function renderTable() {
+  const sel = $('txFlag');
+  if (sel.options.length === 1) sel.innerHTML += Object.entries(FLAGS).map(([k, f]) => `<option value="${k}">${f.label}</option>`).join('');
+  const rows = tableRows();
+  $('txCount').textContent = `· ${rows.length} shown`;
+  $('txTable').innerHTML = `<tr><th>Date</th><th>Business</th><th>Category</th><th class="r">Qty</th><th class="r">Amount</th><th>Method</th><th>By</th><th>Notes</th><th>Flags</th><th></th></tr>` +
+    rows.slice(0, 500).map(t => {
+      const cls = t.kind === 'capital' ? 'bl' : t.direction === 'in' ? 'up' : 'dn';
+      const flags = t.flags.map(f => `<span class="pill ${FLAGS[f].cls}" title="${f === 'price' ? 'Expected ' + ghs(t.expected) : ''}">${FLAGS[f].label}${f === 'price' ? ' ' + sgn(t.priceDiff) : ''}</span>`).join(' ');
+      const url = safeUrl(t.receipt);
+      return `<tr><td class="small" style="white-space:nowrap">${dstr(t.date)}</td><td><span style="color:${BIZ_COLOR[t.business] || 'inherit'}">●</span> ${esc(t.business)}</td>
+        <td class="small">${esc(t.category || '—')}</td><td class="r num">${t.qty ?? '—'}</td><td class="r num ${cls}">${t.amount == null ? '—' : sgn(signed(t))}</td>
+        <td class="small">${esc(t.method)}</td><td class="small mu">${esc(t.submitter)}</td><td class="small mu">${esc(t.notes)}</td>
+        <td><div style="display:flex;gap:4px;flex-wrap:wrap">${flags}</div></td><td>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener" title="Open receipt">🧾</a>` : ''}</td></tr>`;
+    }).join('') + (rows.length > 500 ? `<tr><td colspan="10" class="mu small">Showing the latest 500. Use search or Export CSV for the rest.</td></tr>` : '');
+}
+function exportCSV() {
+  const rows = tableRows();
+  const head = ['Date', 'Business', 'Direction', 'Kind', 'Category', 'Qty', 'Amount', 'Method', 'Submitter', 'Notes', 'Receipt', 'Flags', 'Sheet row'];
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const csv = [head.join(',')].concat(rows.map(t => [t.date.toISOString(), t.business, t.direction, t.kind, t.category, t.qty, t.amount, t.method, t.submitter, t.notes, t.receipt, t.flags.map(f => FLAGS[f].label).join('; '), t.sheet_row].map(q).join(','))).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'triangle-transactions-' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+}
+
+/* ---------- events ---------- */
+$('fBiz').addEventListener('change', render);
+$('fPerson').addEventListener('change', render);
+$('fCapital').addEventListener('change', () => { renderMain(); });
+$('fFrom').addEventListener('change', render);
+$('fTo').addEventListener('change', render);
+document.querySelectorAll('#fRange button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#fRange button').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); S.range = b.dataset.r; $('fFrom').value = ''; $('fTo').value = ''; render();
+}));
+$('txSearch').addEventListener('input', renderTable);
+$('txFlag').addEventListener('change', e => { S.flagFilter = e.target.value; renderTable(); });
+$('csvBtn').addEventListener('click', exportCSV);
+$('refreshBtn').addEventListener('click', loadData);
+$('sSave').addEventListener('click', async () => {
+  const v = { large: Number($('sLarge').value) || 1000, inactive: Number($('sInactive').value) || 14, auditFrom: $('sAuditFrom').value || '' };
+  const { error } = await saveSetting('thresholds', v);
+  if (error) { $('sMsg').textContent = 'Could not save: ' + error.message; return; }
+  S.settings = v; $('sMsg').textContent = 'Saved'; computeFlags(); render();
+});
+
+boot();
+</script>
+</body>
+</html>
